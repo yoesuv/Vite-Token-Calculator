@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Button,
@@ -12,6 +12,7 @@ import {
   Textarea,
   VStack,
 } from '@chakra-ui/react'
+import AppHeader from './components/AppHeader/AppHeader'
 import './App.css'
 
 const system = createSystem(defaultConfig)
@@ -22,22 +23,51 @@ const models = [
   { name: 'Gemini 2.5 Pro', provider: 'Google', price: '$0.01', icon: '◆' },
 ]
 
+type Theme = 'light' | 'dark'
+
+function getInitialTheme(): Theme {
+  try {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark') return stored
+  } catch {
+    // Storage may be unavailable in private browsing or restricted environments.
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function persistTheme(theme: Theme) {
+  try {
+    localStorage.setItem('theme', theme)
+  } catch {
+    // Keep the theme in memory when persistent storage is unavailable.
+  }
+}
+
 function App() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    persistTheme(theme)
+  }, [theme])
+
   const [prompt, setPrompt] = useState('')
   const wordCount = useMemo(() => prompt.trim().split(/\s+/).filter(Boolean).length, [prompt])
   const tokenCount = Math.ceil(prompt.length / 4)
 
   return (
     <ChakraProvider value={system}>
+      <AppHeader
+        theme={theme}
+        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      />
       <Box as="main" className="page-shell">
-        <Heading as="header" className="page-header">
-          <span className="brand-mark">✳</span> token<span className="brand-light">wise</span>
-        </Heading>
 
         <Box as="section" className="blueprint-section blueprint-section-one" aria-labelledby="input-title">
           <VStack className="section-content" align="stretch" gap="0">
             <Text className="section-kicker"><span className="section-number">01</span> YOUR INPUT</Text>
-            <Heading id="input-title" className="section-heading" as="h1">What are you asking?</Heading>
+            <Heading id="input-title" className="section-heading" as="h2">What are you asking?</Heading>
             <Text className="section-description">Start with a prompt and see how much it costs to run across different models.</Text>
             <Text className="field-label">PASTE A PROMPT OR SAMPLE TEXT</Text>
             <Textarea
@@ -59,7 +89,7 @@ function App() {
             <Text className="section-kicker"><span className="section-number">02</span> MODEL COMPARISON</Text>
             <HStack className="section-heading-row" justify="space-between" align="end">
               <Box>
-                <Heading id="models-title" className="section-heading" as="h2">Compare the answers</Heading>
+                <Heading id="models-title" className="section-heading" as="h3">Compare the answers</Heading>
                 <Text className="section-description">Choose a model to compare estimated output costs.</Text>
               </Box>
               <Text className="estimate-label">ESTIMATED COST / 1K OUTPUT TOKENS</Text>

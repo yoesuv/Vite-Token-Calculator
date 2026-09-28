@@ -4,36 +4,13 @@
   padding: 16px 0 46px;
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  margin: 0 0 30px;
-  color: #25231f;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -1px;
-  line-height: 1.2;
-}
-
-.brand-mark {
-  margin-right: 7px;
-  color: #ed694c;
-  font-size: 25px;
-}
-
-.brand-light {
-  color: #8b8881;
-  font-weight: 400;
-}
-
 .blueprint-section {
   position: relative;
   width: 100%;
-  border: 1px solid #e4e1da;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 16px 40px #302a1710;
+  background: var(--surface);
+  box-shadow: var(--section-shadow);
   overflow: hidden;
 }
 
@@ -43,7 +20,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: #ed694c;
+  background: var(--accent);
   content: '';
 }
 
@@ -67,7 +44,7 @@
 .estimate-label,
 .input-meta,
 .model-caption {
-  color: #8b8881;
+  color: var(--text-faint);
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   letter-spacing: 1px;
@@ -75,26 +52,26 @@
 }
 
 .section-kicker {
-  color: #ed694c;
+  color: var(--accent);
 }
 
 .section-number {
   margin-right: 7px;
-  color: #ed694c;
+  color: var(--accent);
   font-weight: 500;
 }
 
 .section-description {
   max-width: 540px;
   margin-top: 9px;
-  color: #77756f;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.6;
 }
 
 .section-heading {
   margin-top: 13px;
-  color: #272620;
+  color: var(--text-heading);
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(27px, 3vw, 38px);
   font-weight: 500;
@@ -104,7 +81,7 @@
 
 .field-label {
   margin-top: 34px;
-  color: #888;
+  color: var(--text-faint);
   font-size: 9px;
 }
 
@@ -114,27 +91,27 @@
   margin-top: 10px;
   padding: 14px;
   resize: vertical;
-  border: 1px solid #d5d5d5;
+  border: 1px solid var(--border-soft);
   border-radius: 3px;
-  background: #fafafa;
-  color: #222;
+  background: var(--input-bg);
+  color: var(--text);
   font-size: 13px;
   line-height: 1.6;
   outline: none;
 }
 
 .prompt-input:focus {
-  border-color: #111;
-  box-shadow: 0 0 0 2px #11111118;
+  border-color: var(--button-bg);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .prompt-input::placeholder {
-  color: #999;
+  color: var(--text-faint);
 }
 
 .input-meta {
   margin-top: 9px;
-  color: #888;
+  color: var(--text-faint);
   font-size: 9px;
   letter-spacing: 0;
   text-transform: none;
@@ -143,12 +120,12 @@
 .clear-button {
   min-height: auto;
   padding: 0;
-  color: #555;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
 .clear-button:hover {
-  color: #111;
+  color: var(--text);
   background: transparent;
 }
 
@@ -158,7 +135,7 @@
 
 .estimate-label {
   padding-bottom: 3px;
-  color: #888;
+  color: var(--text-faint);
   font-size: 9px;
   text-align: right;
 }
@@ -170,17 +147,17 @@
 .model-card {
   min-height: 165px;
   padding: 14px;
-  border: 1px solid #d6d6d6;
+  border: 1px solid var(--border-soft);
   border-radius: 3px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .model-card-1 {
-  background: #fcfaf8;
+  background: var(--surface-alt-1);
 }
 
 .model-card-2 {
-  background: #fafbfd;
+  background: var(--surface-alt-2);
 }
 
 .model-icon {
@@ -189,42 +166,42 @@
   height: 25px;
   place-items: center;
   border-radius: 5px;
-  background: #f0f0f0;
-  color: #555;
+  background: var(--icon-bg);
+  color: var(--icon-fg);
   font-size: 13px;
 }
 
 .model-card-1 .model-icon {
-  background: #f5e9e3;
-  color: #b56d59;
+  background: var(--icon-bg-1);
+  color: var(--icon-fg-1);
 }
 
 .model-card-2 .model-icon {
-  background: #e8eef7;
-  color: #52729f;
+  background: var(--icon-bg-2);
+  color: var(--icon-fg-2);
 }
 
 .model-check {
-  color: #477153;
+  color: var(--check-fg);
   font-size: 13px;
 }
 
 .model-name {
   margin-top: 26px;
-  color: #222;
+  color: var(--text);
   font-size: 13px;
   font-weight: 600;
 }
 
 .model-provider {
   margin-top: 3px;
-  color: #999;
+  color: var(--text-faint);
   font-size: 10px;
 }
 
 .model-price {
   margin-top: 9px;
-  color: #111;
+  color: var(--text);
   font-family: 'Space Grotesk', sans-serif;
   font-size: 22px;
   font-weight: 500;
@@ -232,7 +209,7 @@
 
 .model-caption {
   margin-top: 2px;
-  color: #999;
+  color: var(--text-faint);
   font-size: 8px;
   letter-spacing: 0;
   text-transform: none;
@@ -243,14 +220,15 @@
   height: 45px;
   margin-top: 22px;
   border-radius: 3px;
-  background: #111;
-  color: #fff;
+  background: var(--button-bg);
+  color: var(--button-fg);
   font-size: 12px;
   font-weight: 600;
 }
 
 .compare-button:hover {
-  background: #333;
+  background: var(--button-bg);
+  filter: brightness(1.15);
 }
 
 .compare-button span {
@@ -261,11 +239,6 @@
   .page-shell {
     width: min(100% - 28px, 1120px);
     padding-top: 14px;
-  }
-
-  .page-header {
-    margin-bottom: 25px;
-    font-size: 18px;
   }
 
   .blueprint-section-one {
@@ -291,3 +264,5 @@
     text-align: left;
   }
 }
+
+
