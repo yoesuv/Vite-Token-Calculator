@@ -1,5 +1,5 @@
 .page-shell {
-  width: min(100% - 40px, 1120px);
+  width: calc(100% - 64px);
   margin: 0 auto;
   padding: 16px 0 46px;
 }
@@ -26,9 +26,70 @@
 
 .blueprint-section-one {
   min-height: 356px;
+  background-image: radial-gradient(var(--border) .7px, transparent .7px);
+  background-position: right 24px top 24px;
+  background-size: 18px 18px;
 }
 
-.blueprint-section-two {
+.blueprint-section-one::after {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  width: 37%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--surface), color-mix(in srgb, var(--surface) 45%, transparent));
+  content: '';
+  pointer-events: none;
+}
+
+.blueprint-section-one .section-content {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 76px, 920px);
+}
+
+.input-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.token-summary {
+  min-width: 174px;
+  padding: 17px 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent));
+}
+
+.token-summary-label {
+  color: var(--text-faint);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .8px;
+}
+
+.token-summary-value {
+  margin-top: 6px;
+  color: var(--text-heading);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.token-summary-value span,
+.token-summary-note {
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.token-summary-note { margin-top: 2px; }
+
+.field-label {
   min-height: 472px;
   margin-top: 23px;
 }
@@ -237,13 +298,33 @@
 
 @media (max-width: 650px) {
   .page-shell {
-    width: min(100% - 28px, 1120px);
+    width: min(100% - 64px, 1120px);
     padding-top: 14px;
   }
 
   .blueprint-section-one {
     min-height: 440px;
   }
+
+  .blueprint-section-one::after {
+    width: 100%;
+    height: 32%;
+    background: linear-gradient(180deg, var(--surface), transparent);
+  }
+
+  .input-intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .token-summary {
+    width: 100%;
+    padding: 12px 15px;
+  }
+
+  .token-summary-value { display: inline-block; margin-right: 7px; }
+  .token-summary-note { display: inline-block; }
 
   .blueprint-section-two {
     min-height: 500px;
