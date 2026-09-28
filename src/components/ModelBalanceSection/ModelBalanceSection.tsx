@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { Box, Button, HStack, Text } from '@chakra-ui/react'
-import { coverageTokens, DEFAULT_BALANCE, formatRupiah, pricePerMillionIDR } from '../../lib/pricing'
+import {
+  coverageTokens,
+  currencyConfig,
+  formatBalanceForDisplay,
+  formatMoney,
+  pricePerMillion,
+  sanitizeBalanceInput,
+  type Currency,
+} from '../../lib/pricing'
 import './ModelBalanceSection.css'
 
 // Mirrors the model API response so the temporary catalog can be replaced by an API response.
@@ -27,8 +35,13 @@ const initialModels: Model[] = [
 // Comparison stays readable with at most 6 slots, even if the API returns more models.
 const SLOT_LIMIT = 6
 
-export function ModelBalanceSection() {
-  const [balance, setBalance] = useState(DEFAULT_BALANCE)
+type ModelBalanceSectionProps = {
+  currency: Currency
+  balance: string
+  onBalanceChange: (balance: string) => void
+}
+
+export function ModelBalanceSection({ currency, balance, onBalanceChange }: ModelBalanceSectionProps) {
   const [models] = useState<Model[]>(initialModels)
   // Slot count follows the catalog: one slot per model (capped), first two pre-selected.
   const [selected, setSelected] = useState<(string | null)[]>(() =>
@@ -37,7 +50,8 @@ export function ModelBalanceSection() {
   const [usageOpen, setUsageOpen] = useState(false)
   // While editing, show raw digits so the cursor behaves; format with separators only when blurred.
   const [balanceFocused, setBalanceFocused] = useState(false)
-  const numericBalance = Number(balance.replace(/[^\d]/g, '')) || 0
+  const numericBalance = Number(balance) || 0
+  const config = currencyConfig(currency)
   const currentModel = (id: string | null) => models.find((model) => model.id === id)
   const addModel = (slot: number) => {
     const nextModel = models.find((model) => !selected.includes(model.id))
@@ -51,8 +65,8 @@ export function ModelBalanceSection() {
         <Box className="balance-amount-block">
           <Text className="balance-eyebrow">▱ &nbsp;AVAILABLE BALANCE</Text>
           <HStack className="balance-input-row" gap="2">
-            <Text className="currency-prefix">Rp</Text>
-            <input id="balance-title" className="balance-input" aria-label="Available balance in rupiah" inputMode="numeric" value={balanceFocused ? balance : Number(balance || 0).toLocaleString('id-ID')} onFocus={() => setBalanceFocused(true)} onBlur={() => setBalanceFocused(false)} onChange={(event) => setBalance(event.target.value.replace(/\D/g, ''))} />
+            <Text className="currency-prefix">{config.symbol}</Text>
+            <input id="balance-title" className="balance-input" aria-label={`Available balance in ${config.displayName}`} inputMode={config.inputMode} value={balanceFocused ? balance : formatBalanceForDisplay(balance, currency)} onFocus={() => setBalanceFocused(true)} onBlur={() => setBalanceFocused(false)} onChange={(event) => onBalanceChange(sanitizeBalanceInput(event.target.value, currency))} />
           </HStack>
           <Text className="balance-help">Editing this value does not change your account balance.</Text>
         </Box>
@@ -77,10 +91,10 @@ export function ModelBalanceSection() {
               </Box>
               <Box className="coverage-panel">
                 <Text className="coverage-label">Estimated coverage</Text>
-                <Text className="coverage-value">{(coverageTokens(numericBalance, model) / 1000000).toFixed(2)}M</Text>
+                <Text className="coverage-value">{(coverageTokens(numericBalance, model, currency) / 1000000).toFixed(2)}M</Text>
                 <Text className="coverage-note">tokens with the primary balance</Text>
               </Box>
-              <HStack className="price-row" justify="space-between"><Text>Estimated price</Text><strong>{formatRupiah(pricePerMillionIDR(model))} / 1M tokens</strong></HStack>
+              <HStack className="price-row" justify="space-between"><Text>Estimated price</Text><strong>{formatMoney(pricePerMillion(model, currency), currency)} / 1M tokens</strong></HStack>
             </> : <button className="add-model" onClick={() => addModel(slot)} aria-label={`Add model to Compare ${slot}`}><span>+</span><strong>Compare {slot}</strong><small>Select a model below</small></button>}
           </Box>
         })}

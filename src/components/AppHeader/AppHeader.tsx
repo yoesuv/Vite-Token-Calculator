@@ -1,12 +1,15 @@
 import { Box, Button, Heading, HStack, Text } from '@chakra-ui/react'
+import { CURRENCY_LIST, currencyConfig, type Currency } from '../../lib/pricing'
 import './AppHeader.css'
 
 type AppHeaderProps = {
   theme: 'light' | 'dark'
   onToggleTheme: () => void
+  currency: Currency
+  onCurrencyChange: (currency: Currency) => void
 }
 
-function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
+function AppHeader({ theme, onToggleTheme, currency, onCurrencyChange }: AppHeaderProps) {
   return (
     <Box as="header" className="app-bar">
       <Box className="app-bar-inner">
@@ -22,15 +25,29 @@ function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
             <Text className="app-subtitle">See how far your prompt goes across different AI models.</Text>
           </Box>
         </HStack>
-        <Button
-          variant="plain"
-          className="theme-toggle"
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          onClick={onToggleTheme}
-        >
-          <span className="theme-toggle-icon" aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
-          {theme === 'dark' ? 'Light' : 'Dark'}
-        </Button>
+        <HStack className="app-bar-actions" gap="2">
+          <select
+            className="currency-select"
+            aria-label="Select currency"
+            value={currency}
+            onChange={(event) => onCurrencyChange(event.target.value as Currency)}
+          >
+            {CURRENCY_LIST.map((code) => (
+              <option key={code} value={code}>
+                {currencyConfig(code).symbol} · {code}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="plain"
+            className="theme-toggle"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            onClick={onToggleTheme}
+          >
+            <span className="theme-toggle-icon" aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </Button>
+        </HStack>
       </Box>
     </Box>
   )
