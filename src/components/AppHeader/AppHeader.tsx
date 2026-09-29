@@ -1,15 +1,20 @@
 import { Box, Button, Heading, HStack, Text } from '@chakra-ui/react'
 import { CURRENCY_LIST, currencyConfig, type Currency } from '../../lib/pricing'
+import type { ColorMode } from '../../lib/useColorMode'
 import './AppHeader.css'
 
 type AppHeaderProps = {
-  theme: 'light' | 'dark'
-  onToggleTheme: () => void
+  colorMode: ColorMode
+  onToggleColorMode: () => void
   currency: Currency
   onCurrencyChange: (currency: Currency) => void
 }
 
-function AppHeader({ theme, onToggleTheme, currency, onCurrencyChange }: AppHeaderProps) {
+function AppHeader({ colorMode, onToggleColorMode, currency, onCurrencyChange }: AppHeaderProps) {
+  // colorMode state is owned by AppShell — the hook must only be instantiated
+  // once, otherwise components would hold divergent copies of the mode.
+  const isDark = colorMode === 'dark'
+
   return (
     <Box as="header" className="app-bar">
       <Box className="app-bar-inner">
@@ -41,11 +46,11 @@ function AppHeader({ theme, onToggleTheme, currency, onCurrencyChange }: AppHead
           <Button
             variant="plain"
             className="theme-toggle"
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            onClick={onToggleTheme}
+            aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
+            onClick={onToggleColorMode}
           >
-            <span className="theme-toggle-icon" aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
-            {theme === 'dark' ? 'Light' : 'Dark'}
+            <span className="theme-toggle-icon" aria-hidden="true">{isDark ? '☀' : '☾'}</span>
+            {isDark ? 'Light' : 'Dark'}
           </Button>
         </HStack>
       </Box>

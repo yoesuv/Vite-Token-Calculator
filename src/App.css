@@ -7,10 +7,10 @@
 .blueprint-section {
   position: relative;
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--chakra-colors-border);
   border-radius: 10px;
-  background: var(--surface);
-  box-shadow: var(--section-shadow);
+  background: var(--chakra-colors-bg-panel);
+  box-shadow: var(--chakra-shadows-section);
   overflow: hidden;
 }
 
@@ -20,13 +20,13 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: var(--accent);
+  background: var(--chakra-colors-accent);
   content: '';
 }
 
 .blueprint-section-one {
   min-height: 356px;
-  background-image: radial-gradient(var(--border) .7px, transparent .7px);
+  background-image: radial-gradient(var(--chakra-colors-border) .7px, transparent .7px);
   background-position: right 24px top 24px;
   background-size: 18px 18px;
 }
@@ -38,7 +38,7 @@
   right: 0;
   width: 37%;
   height: 100%;
-  background: linear-gradient(90deg, var(--surface), color-mix(in srgb, var(--surface) 45%, transparent));
+  background: linear-gradient(90deg, var(--chakra-colors-bg-panel), color-mix(in srgb, var(--chakra-colors-bg-panel) 45%, transparent));
   content: '';
   pointer-events: none;
 }
@@ -59,30 +59,30 @@
 .token-summary {
   min-width: 174px;
   padding: 17px 20px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--chakra-colors-border-subtle);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--surface) 92%, var(--accent));
+  background: color-mix(in srgb, var(--chakra-colors-bg-panel) 92%, var(--chakra-colors-accent));
 }
 
 .token-summary-label {
-  color: var(--text-faint);
-  font-family: 'DM Mono', monospace;
+  color: var(--chakra-colors-fg-subtle);
+  font-family: var(--chakra-fonts-mono);
   font-size: 9px;
   letter-spacing: .8px;
 }
 
 .token-summary-value {
   margin-top: 6px;
-  color: var(--text-heading);
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--chakra-colors-fg-heading);
+  font-family: var(--chakra-fonts-heading);
   font-size: 25px;
   font-weight: 600;
 }
 
 .token-summary-value span,
 .token-summary-note {
-  color: var(--text-muted);
-  font-family: 'DM Sans', sans-serif;
+  color: var(--chakra-colors-fg-muted);
+  font-family: var(--chakra-fonts-body);
   font-size: 11px;
   font-weight: 400;
 }
@@ -105,35 +105,35 @@
 .estimate-label,
 .input-meta,
 .model-caption {
-  color: var(--text-faint);
-  font-family: 'DM Mono', monospace;
+  color: var(--chakra-colors-fg-subtle);
+  font-family: var(--chakra-fonts-mono);
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
 .section-kicker {
-  color: var(--accent);
+  color: var(--chakra-colors-accent);
 }
 
 .section-number {
   margin-right: 7px;
-  color: var(--accent);
+  color: var(--chakra-colors-accent);
   font-weight: 500;
 }
 
 .section-description {
   max-width: 540px;
   margin-top: 9px;
-  color: var(--text-muted);
+  color: var(--chakra-colors-fg-muted);
   font-size: 13px;
   line-height: 1.6;
 }
 
 .section-heading {
   margin-top: 13px;
-  color: var(--text-heading);
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--chakra-colors-fg-heading);
+  font-family: var(--chakra-fonts-heading);
   font-size: clamp(27px, 3vw, 38px);
   font-weight: 500;
   letter-spacing: -1.5px;
@@ -142,7 +142,7 @@
 
 .field-label {
   margin-top: 34px;
-  color: var(--text-faint);
+  color: var(--chakra-colors-fg-subtle);
   font-size: 9px;
 }
 
@@ -152,27 +152,27 @@
   margin-top: 10px;
   padding: 14px;
   resize: vertical;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--chakra-colors-border-subtle);
   border-radius: 3px;
-  background: var(--input-bg);
-  color: var(--text);
+  background: var(--chakra-colors-input-bg);
+  color: var(--chakra-colors-fg);
   font-size: 13px;
   line-height: 1.6;
   outline: none;
 }
 
 .prompt-input:focus {
-  border-color: var(--button-bg);
-  box-shadow: 0 0 0 2px var(--focus-ring);
+  border-color: var(--chakra-colors-button-bg);
+  box-shadow: 0 0 0 2px var(--chakra-colors-focus-ring);
 }
 
 .prompt-input::placeholder {
-  color: var(--text-faint);
+  color: var(--chakra-colors-fg-subtle);
 }
 
 .input-meta {
   margin-top: 9px;
-  color: var(--text-faint);
+  color: var(--chakra-colors-fg-subtle);
   font-size: 9px;
   letter-spacing: 0;
   text-transform: none;
@@ -181,12 +181,12 @@
 .clear-button {
   min-height: auto;
   padding: 0;
-  color: var(--text-muted);
+  color: var(--chakra-colors-fg-muted);
   font-size: 11px;
 }
 
 .clear-button:hover {
-  color: var(--text);
+  color: var(--chakra-colors-fg);
   background: transparent;
 }
 
@@ -196,7 +196,7 @@
 
 .estimate-label {
   padding-bottom: 3px;
-  color: var(--text-faint);
+  color: var(--chakra-colors-fg-subtle);
   font-size: 9px;
   text-align: right;
 }
@@ -208,17 +208,17 @@
 .model-card {
   min-height: 165px;
   padding: 14px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--chakra-colors-border-subtle);
   border-radius: 3px;
-  background: var(--surface);
+  background: var(--chakra-colors-bg-panel);
 }
 
 .model-card-1 {
-  background: var(--surface-alt-1);
+  background: var(--chakra-colors-bg-subtle);
 }
 
 .model-card-2 {
-  background: var(--surface-alt-2);
+  background: var(--chakra-colors-bg-muted);
 }
 
 .model-icon {
@@ -227,50 +227,50 @@
   height: 25px;
   place-items: center;
   border-radius: 5px;
-  background: var(--icon-bg);
-  color: var(--icon-fg);
+  background: var(--chakra-colors-icon-bg);
+  color: var(--chakra-colors-icon-fg);
   font-size: 13px;
 }
 
 .model-card-1 .model-icon {
-  background: var(--icon-bg-1);
-  color: var(--icon-fg-1);
+  background: var(--chakra-colors-icon-bg-1);
+  color: var(--chakra-colors-icon-fg-1);
 }
 
 .model-card-2 .model-icon {
-  background: var(--icon-bg-2);
-  color: var(--icon-fg-2);
+  background: var(--chakra-colors-icon-bg-2);
+  color: var(--chakra-colors-icon-fg-2);
 }
 
 .model-check {
-  color: var(--check-fg);
+  color: var(--chakra-colors-check-fg);
   font-size: 13px;
 }
 
 .model-name {
   margin-top: 26px;
-  color: var(--text);
+  color: var(--chakra-colors-fg);
   font-size: 13px;
   font-weight: 600;
 }
 
 .model-provider {
   margin-top: 3px;
-  color: var(--text-faint);
+  color: var(--chakra-colors-fg-subtle);
   font-size: 10px;
 }
 
 .model-price {
   margin-top: 9px;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--chakra-colors-fg);
+  font-family: var(--chakra-fonts-heading);
   font-size: 22px;
   font-weight: 500;
 }
 
 .model-caption {
   margin-top: 2px;
-  color: var(--text-faint);
+  color: var(--chakra-colors-fg-subtle);
   font-size: 8px;
   letter-spacing: 0;
   text-transform: none;
@@ -281,14 +281,14 @@
   height: 45px;
   margin-top: 22px;
   border-radius: 3px;
-  background: var(--button-bg);
-  color: var(--button-fg);
+  background: var(--chakra-colors-button-bg);
+  color: var(--chakra-colors-button-fg);
   font-size: 12px;
   font-weight: 600;
 }
 
 .compare-button:hover {
-  background: var(--button-bg);
+  background: var(--chakra-colors-button-bg);
   filter: brightness(1.15);
 }
 
@@ -309,7 +309,7 @@
   .blueprint-section-one::after {
     width: 100%;
     height: 32%;
-    background: linear-gradient(180deg, var(--surface), transparent);
+    background: linear-gradient(180deg, var(--chakra-colors-bg-panel), transparent);
   }
 
   .input-intro {

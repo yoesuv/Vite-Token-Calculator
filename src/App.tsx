@@ -1,21 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Box, ChakraProvider, createSystem, defaultConfig } from '@chakra-ui/react'
+import { Box, ChakraProvider, Theme } from '@chakra-ui/react'
 import AppHeader from './components/AppHeader/AppHeader'
 import { ModelBalanceSection } from './components/ModelBalanceSection/ModelBalanceSection'
 import { convertBalance, CURRENCY_LIST, DEFAULT_BALANCE, type Currency } from './lib/pricing'
+import { system } from './theme'
+import { useColorMode } from './lib/useColorMode'
 import './App.css'
-
-const system = createSystem(defaultConfig)
-type Theme = 'light' | 'dark'
-function getInitialTheme(): Theme {
-  try {
-    const stored = localStorage.getItem('theme')
-    if (stored === 'light' || stored === 'dark') return stored
-  } catch {
-    // Storage may be unavailable in private browsing or restricted environments.
-  }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
 
 function getInitialCurrency(): Currency {
   try {
@@ -28,15 +18,21 @@ function getInitialCurrency(): Currency {
 }
 
 function App() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  return (
+    <ChakraProvider value={system}>
+      <AppShell />
+    </ChakraProvider>
+  )
+}
+
+/** Sits inside the provider so hooks can consume the system. */
+function AppShell() {
+  // Single source of truth for color mode: the <Theme> wrapper, the <html>
+  // sync, and the header toggle all read from this one instance.
+  const { colorMode, toggleColorMode } = useColorMode()
   const [currency, setCurrency] = useState<Currency>(getInitialCurrency)
   // Balance lives here so switching currency can convert the entered value.
   const [balance, setBalance] = useState(() => DEFAULT_BALANCE[getInitialCurrency()])
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    try { localStorage.setItem('theme', theme) } catch { /* Keep the theme in memory. */ }
-  }, [theme])
 
   useEffect(() => {
     try { localStorage.setItem('currency', currency) } catch { /* Keep the currency in memory. */ }
@@ -49,17 +45,19 @@ function App() {
   }
 
   return (
-    <ChakraProvider value={system}>
+    // Chakra's official color-mode wrapper: renders the `.dark`/`.light`
+    // `chakra-theme` class, sets `color-scheme`, and paints bg/fg tokens.
+    <Theme appearance={colorMode}>
       <AppHeader
-        theme={theme}
-        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        colorMode={colorMode}
+        onToggleColorMode={toggleColorMode}
         currency={currency}
         onCurrencyChange={switchCurrency}
       />
       <Box as="main" className="page-shell">
         <ModelBalanceSection currency={currency} balance={balance} onBalanceChange={setBalance} />
       </Box>
-    </ChakraProvider>
+    </Theme>
   )
 }
 

@@ -29,7 +29,7 @@ const initialModels: Model[] = [
   { id: 'claude-opus-4.8', name: 'Claude Opus 4.8', input: 500, output: 2500, cache: 50, context: 1000000, modalities: ['text', 'image'] },
   { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', input: 125, output: 1000, cache: 35, context: 1048576, modalities: ['text', 'image', 'video'] },
   { id: 'moonshotai/kimi-k3', name: 'Kimi K3', input: 100, output: 900, cache: 30, context: 1048576, modalities: ['text', 'image', 'video'] },
-  { id: 'meta/llama-4-maverick', name: 'Llama 4 Maverick', input: 150, output: 850, cache: 25, context: 1048576, modalities: ['text', 'image'] },
+  { id: 'meta/muse-spark-1.3-contributor', name: 'Muse Spark 1.3 Contributor', input: 150, output: 850, cache: 25, context: 1048576, modalities: ['text', 'image'] },
 ]
 
 // Comparison stays readable with at most 6 slots, even if the API returns more models.
@@ -87,7 +87,10 @@ export function ModelBalanceSection({ currency, balance, onBalanceChange }: Mode
             {model ? <>
               <Box className="model-select-label">
                 <span className={`provider-mark provider-mark-${slot}`}>{slot === 1 ? '✳' : slot === 2 ? '◆' : '◎'}</span>
-                <span className="model-ident"><strong>{model.name}</strong><small>{model.id}</small></span>
+                <span className="model-ident">
+                  <strong title={model.name}>{model.name}</strong>
+                  <small title={model.id}>{model.id}</small>
+                </span>
               </Box>
               <Box className="coverage-panel">
                 <Text className="coverage-label">Estimated coverage</Text>

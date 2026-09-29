@@ -4,9 +4,9 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-bottom: 1px solid var(--chakra-colors-border);
+  background: var(--chakra-colors-bg-panel);
+  background: color-mix(in srgb, var(--chakra-colors-bg-panel) 88%, transparent);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
@@ -33,8 +33,8 @@
   height: 36px;
   place-items: center;
   border-radius: 10px;
-  background: var(--icon-bg);
-  color: var(--icon-fg);
+  background: var(--chakra-colors-icon-bg);
+  color: var(--chakra-colors-icon-fg);
 }
 
 .brand-icon svg {
@@ -49,8 +49,8 @@
 
 .app-title {
   margin: 0;
-  color: var(--text-heading);
-  font-family: 'Space Grotesk', sans-serif;
+  color: var(--chakra-colors-fg-heading);
+  font-family: var(--chakra-fonts-heading);
   font-size: 21px;
   font-weight: 600;
   letter-spacing: -0.8px;
@@ -59,7 +59,7 @@
 
 .app-subtitle {
   margin-top: 4px;
-  color: var(--text-muted);
+  color: var(--chakra-colors-fg-muted);
   font-size: 12px;
   line-height: 1.3;
 }
@@ -75,11 +75,11 @@
   height: 34px;         /* explicit height overrides Chakra's layered 40px recipe so both pills match */
   min-height: 34px;
   padding: 0 13px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--chakra-colors-border-subtle);
   border-radius: 999px;
-  background: var(--surface);
-  color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg-muted);
+  font-family: var(--chakra-fonts-mono);
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -88,8 +88,8 @@
 }
 
 .theme-toggle:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--chakra-colors-accent);
+  color: var(--chakra-colors-accent);
 }
 
 .theme-toggle-icon {
@@ -97,7 +97,8 @@
   line-height: 1;
 }
 
-[data-theme='dark'] .theme-toggle-icon {
+/* Chakra color mode: `.dark` sits on <html> (synced by useColorMode) and on the <Theme> wrapper. */
+.dark .theme-toggle-icon {
   transform: rotate(180deg);
 }
 
@@ -109,11 +110,11 @@
   height: 34px;          /* match the theme-toggle pill exactly — native selects ignore min-height stretching */
   min-height: 34px;
   padding: 0 26px 0 13px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--chakra-colors-border-subtle);
   border-radius: 999px;
-  background: var(--surface);
-  color: var(--text-muted);
-  font-family: 'DM Mono', monospace;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg-muted);
+  font-family: var(--chakra-fonts-mono);
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -129,8 +130,8 @@
 
 .currency-select:hover,
 .currency-select:focus-visible {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--chakra-colors-accent);
+  color: var(--chakra-colors-accent);
   outline: none;
 }
 
@@ -139,7 +140,7 @@
   padding: 8px 12px;
   color: initial;
   background: initial;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--chakra-fonts-body);
   font-size: 14px;
   letter-spacing: 0.2px;
   text-transform: none;

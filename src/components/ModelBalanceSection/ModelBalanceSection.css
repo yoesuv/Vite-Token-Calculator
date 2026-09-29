@@ -1,15 +1,14 @@
 .balance-section {
-  --balance-blue: var(--accent);
   position: relative;
   overflow: hidden;
   width: 100%;
   margin: 32px auto 0;
   padding: 32px 44px 24px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--chakra-colors-border);
   border-radius: 10px;
-  background: var(--surface);
-  box-shadow: var(--section-shadow);
-  color: var(--text);
+  background: var(--chakra-colors-bg-panel);
+  box-shadow: var(--chakra-shadows-section);
+  color: var(--chakra-colors-fg);
 }
 
 .balance-section::before {
@@ -22,63 +21,67 @@
   justify-content: space-between;
   gap: 32px;
   padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--chakra-colors-border);
 }
 
 .balance-eyebrow,
 .slot-label,
 .picker-label {
-  color: var(--text-faint);
-  font-family: 'DM Mono', monospace;
+  color: var(--chakra-colors-fg-subtle);
+  font-family: var(--chakra-fonts-mono);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-.balance-eyebrow { color: var(--accent); }
+.balance-eyebrow { color: var(--chakra-colors-accent); }
 .balance-input-row { margin-top: 8px; }
-.currency-prefix { color: var(--text-muted); font-size: 20px; }
-.balance-input { width: 230px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text-heading); font-family: 'Space Grotesk', sans-serif; font-size: 38px; font-weight: 500; }
-.balance-input:focus-visible { border-bottom: 2px solid var(--button-bg); }
+.currency-prefix { color: var(--chakra-colors-fg-muted); font-size: 20px; }
+.balance-input { width: 230px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--chakra-colors-fg-heading); font-family: var(--chakra-fonts-heading); font-size: 38px; font-weight: 500; }
+.balance-input:focus-visible { border-bottom: 2px solid var(--chakra-colors-button-bg); }
 .balance-help,
-.usage-caption { margin-top: 8px; color: var(--text-muted); font-size: 12px; }
+.usage-caption { margin-top: 8px; color: var(--chakra-colors-fg-muted); font-size: 12px; }
 
 .usage-area { position: relative; min-width: 210px; text-align: right; }
-.usage-button { min-width: 210px; height: 44px; border-radius: 3px; background: var(--button-bg); color: var(--button-fg); font-size: 12px; font-weight: 600; }
-.usage-button:hover { background: var(--button-bg); filter: brightness(1.15); }
-.usage-caption { color: var(--text-faint); font-family: 'DM Mono', monospace; font-size: 9px; }
-.usage-popover { position: absolute; z-index: 3; top: 100%; right: 0; width: 280px; margin-top: 8px; padding: 13px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface); color: var(--text); box-shadow: var(--section-shadow); font-size: 12px; text-align: left; }
+.usage-button { min-width: 210px; height: 44px; border-radius: 3px; background: var(--chakra-colors-button-bg); color: var(--chakra-colors-button-fg); font-size: 12px; font-weight: 600; }
+.usage-button:hover { background: var(--chakra-colors-button-bg); filter: brightness(1.15); }
+.usage-caption { color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 9px; }
+.usage-popover { position: absolute; z-index: 3; top: 100%; right: 0; width: 280px; margin-top: 8px; padding: 13px; border: 1px solid var(--chakra-colors-border); border-radius: 3px; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg); box-shadow: var(--chakra-shadows-section); font-size: 12px; text-align: left; }
 
-.model-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); column-gap: 1px; row-gap: 0; margin-top: 18px; align-items: stretch; background: var(--border); }
-.model-slot { min-width: 0; padding: 14px 18px; border: 0; background: var(--surface); }
+.model-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); column-gap: 1px; row-gap: 0; margin-top: 18px; align-items: stretch; background: var(--chakra-colors-border); }
+.model-slot { min-width: 0; padding: 14px 18px; border: 0; background: var(--chakra-colors-bg-panel); }
 /* Align the outer cards' text with the balance row above (dividers are grid gaps, not borders). */
 .model-slot:first-child { padding-left: 0; }
 .model-slot:last-child { padding-right: 0; }
 .slot-heading { display: flex; height: 20px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.slot-clear { height: auto; min-height: auto; padding: 0; color: var(--accent); font-size: 11px; line-height: 1; }
+.slot-clear { height: auto; min-height: auto; padding: 0; color: var(--chakra-colors-accent); font-size: 11px; line-height: 1; }
 
-.model-select-label { display: flex; align-items: center; gap: 11px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
-.provider-mark { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid var(--border-soft); border-radius: 5px; background: var(--icon-bg); color: var(--icon-fg); font-size: 21px; }
-.provider-mark-1 { background: var(--icon-bg-1); color: var(--icon-fg-1); }
-.provider-mark-2 { background: var(--icon-bg-2); color: var(--icon-fg-2); }
-.provider-mark-3 { background: var(--icon-bg-1); color: var(--icon-fg-1); }
-.model-ident { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
-.model-ident strong { overflow: hidden; color: var(--text); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.model-ident small { overflow: hidden; color: var(--text-faint); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+/* One-line contract for long model names/ids:
+   .model-slot (grid item, min-width: 0) → .model-select-label (flex row, min-width: 0)
+   → .provider-mark (fixed 38px) + .model-ident (flex: 1 1 auto, min-width: 0)
+   → strong/small clip to a single line with an ellipsis. */
+.model-select-label { display: flex; align-items: center; gap: 11px; width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+.provider-mark { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 5px; background: var(--chakra-colors-icon-bg); color: var(--chakra-colors-icon-fg); font-size: 21px; }
+.provider-mark-1 { background: var(--chakra-colors-icon-bg-1); color: var(--chakra-colors-icon-fg-1); }
+.provider-mark-2 { background: var(--chakra-colors-icon-bg-2); color: var(--chakra-colors-icon-fg-2); }
+.provider-mark-3 { background: var(--chakra-colors-icon-bg-1); color: var(--chakra-colors-icon-fg-1); }
+.model-ident { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 3px; }
+.model-ident strong { overflow: hidden; color: var(--chakra-colors-fg); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.model-ident small { overflow: hidden; color: var(--chakra-colors-fg-subtle); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 
-.coverage-panel { margin-top: 16px; padding: 13px 15px; border-radius: 3px; background: var(--surface-alt-2); }
+.coverage-panel { margin-top: 16px; padding: 13px 15px; border-radius: 3px; background: var(--chakra-colors-bg-muted); }
 .coverage-label,
-.coverage-note { color: var(--text-muted); font-size: 12px; }
-.coverage-value { margin: 0; color: var(--accent); font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 500; line-height: 1.25; }
-.price-row { margin-top: 12px; gap: 8px; color: var(--text-muted); font-size: 11px; }
-.price-row strong { color: var(--text); font-size: 12px; white-space: nowrap; }
+.coverage-note { color: var(--chakra-colors-fg-muted); font-size: 12px; }
+.coverage-value { margin: 0; color: var(--chakra-colors-accent); font-family: var(--chakra-fonts-heading); font-size: 30px; font-weight: 500; line-height: 1.25; }
+.price-row { margin-top: 12px; gap: 8px; color: var(--chakra-colors-fg-muted); font-size: 11px; }
+.price-row strong { color: var(--chakra-colors-fg); font-size: 12px; white-space: nowrap; }
 
-.add-model { display: flex; width: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--text); cursor: pointer; }
-.add-model span { display: grid; width: 40px; height: 40px; place-items: center; border: 1px dashed var(--border-soft); border-radius: 5px; color: var(--accent); font-size: 25px; }
-.add-model:hover span { background: var(--surface-alt-1); border-color: var(--accent); }
+.add-model { display: flex; width: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--chakra-colors-fg); cursor: pointer; }
+.add-model span { display: grid; width: 40px; height: 40px; place-items: center; border: 1px dashed var(--chakra-colors-border-subtle); border-radius: 5px; color: var(--chakra-colors-accent); font-size: 25px; }
+.add-model:hover span { background: var(--chakra-colors-bg-subtle); border-color: var(--chakra-colors-accent); }
 .add-model strong { font-size: 14px; font-weight: 600; }
-.add-model small { color: var(--text-muted); font-size: 12px; }
+.add-model small { color: var(--chakra-colors-fg-muted); font-size: 12px; }
 
 @media (max-width: 850px) {
   .balance-section { padding: 26px 28px 20px; }  .model-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
