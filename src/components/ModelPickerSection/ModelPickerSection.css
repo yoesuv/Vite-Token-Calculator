@@ -16,11 +16,10 @@
 .picker-slot { display: flex; min-width: 0; height: 54px; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 10px; background: var(--chakra-colors-bg-subtle); color: var(--chakra-colors-fg-muted); text-align: left; cursor: pointer; }
 .picker-slot-empty { justify-content: flex-start; gap: 5px; white-space: nowrap; font-size: 11px; }
 .picker-slot-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.picker-provider { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid #bfd2ff; border-radius: 9px; background: #e8efff; color: #3649b1; font-size: 22px; font-weight: 700; }
-.provider-claude { background: #f5e9e3; color: #c87555; font-size: 27px; }
-.provider-deepseek { background: #e8edff; color: #526cff; }
-.provider-google { color: #4285f4; font-family: Arial, sans-serif; font-size: 26px; }
-.provider-glm { color: #526cff; }
+.picker-provider { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 9px; background: var(--chakra-colors-icon-bg); color: var(--chakra-colors-icon-fg); font-size: 22px; font-weight: 700; }
+.picker-provider svg { display: block; }
+.provider-anthropic,.provider-claude { background: var(--chakra-colors-icon-bg-1); color: var(--chakra-colors-icon-fg-1); font-size: 24px; }
+.provider-deepseek,.provider-glm { background: var(--chakra-colors-icon-bg-2); color: var(--chakra-colors-icon-fg-2); }
 .picker-slot-copy,.picker-model-copy { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 3px; }
 .picker-slot-copy strong,.picker-slot-copy small,.picker-model-copy strong,.picker-model-copy small { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .picker-slot-copy strong,.picker-model-copy strong { color: var(--chakra-colors-fg-heading); font-size: 13px; font-weight: 600; }
@@ -46,8 +45,12 @@
 .picker-model-copy small { font-size: 12px; }
 .picker-check { position: absolute; top: 9px; right: 9px; display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: var(--chakra-colors-accent); color: white; }
 .picker-check svg { width: 15px; height: 15px; }
-.picker-empty,.picker-limit { grid-column: 1 / -1; margin: 4px 0 0; color: var(--chakra-colors-fg-muted); font-size: 13px; }
+.picker-empty,.picker-limit,.picker-status { grid-column: 1 / -1; margin: 4px 0 0; color: var(--chakra-colors-fg-muted); font-size: 13px; }
 .picker-limit { color: var(--chakra-colors-fg-subtle); text-align: right; }
+.picker-retry { margin-left: 10px; padding: 5px 12px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 8px; background: var(--chakra-colors-bg-subtle); color: var(--chakra-colors-fg); font: inherit; font-size: 12px; cursor: pointer; }
+.picker-retry:hover { border-color: var(--chakra-colors-accent); }
+/* Skeleton placeholders mirror the model-card sizing. */
+.picker-skeleton { min-height: 62px; }
 
 @media (max-width: 1000px) {
   .picker-intro { align-items: flex-start; flex-direction: column; }
@@ -64,6 +67,7 @@
   .picker-slot-copy small { font-size: 9px; }
   .picker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .picker-model { min-height: 68px; gap: 10px; padding: 8px; }
+  .picker-skeleton { min-height: 68px; }
   .picker-model .picker-provider { flex-basis: 34px; width: 34px; height: 34px; }
   .picker-model-copy strong { font-size: 12px; }
   .picker-model-copy small { font-size: 10px; }
