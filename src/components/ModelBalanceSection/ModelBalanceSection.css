@@ -2,7 +2,7 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  margin: 32px auto 0;
+  margin: 0 auto;
   padding: 32px 44px 24px;
   border: 1px solid var(--chakra-colors-border);
   border-radius: 10px;
@@ -35,7 +35,8 @@
   text-transform: uppercase;
 }
 
-.balance-eyebrow { color: var(--chakra-colors-accent); }
+.balance-eyebrow { display: inline-flex; align-items: center; gap: 6px; color: var(--chakra-colors-accent); }
+.balance-eyebrow svg { width: 13px; height: 13px; }
 .balance-input-row { margin-top: 8px; }
 .currency-prefix { color: var(--chakra-colors-fg-muted); font-size: 20px; }
 .balance-input { width: 230px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--chakra-colors-fg-heading); font-family: var(--chakra-fonts-heading); font-size: 38px; font-weight: 500; }
@@ -44,7 +45,8 @@
 .usage-caption { margin-top: 8px; color: var(--chakra-colors-fg-muted); font-size: 12px; }
 
 .usage-area { position: relative; min-width: 210px; text-align: right; }
-.usage-button { min-width: 210px; height: 44px; border-radius: 3px; background: var(--chakra-colors-button-bg); color: var(--chakra-colors-button-fg); font-size: 12px; font-weight: 600; }
+.usage-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 210px; height: 44px; border-radius: 3px; background: var(--chakra-colors-button-bg); color: var(--chakra-colors-button-fg); font-size: 12px; font-weight: 600; }
+.usage-button svg { width: 15px; height: 15px; }
 .usage-button:hover { background: var(--chakra-colors-button-bg); filter: brightness(1.15); }
 .usage-caption { color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 9px; }
 .usage-popover { position: absolute; z-index: 3; top: 100%; right: 0; width: 280px; margin-top: 8px; padding: 13px; border: 1px solid var(--chakra-colors-border); border-radius: 3px; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg); box-shadow: var(--chakra-shadows-section); font-size: 12px; text-align: left; }
@@ -78,7 +80,8 @@
 .price-row strong { color: var(--chakra-colors-fg); font-size: 12px; white-space: nowrap; }
 
 .add-model { display: flex; width: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--chakra-colors-fg); cursor: pointer; }
-.add-model span { display: grid; width: 40px; height: 40px; place-items: center; border: 1px dashed var(--chakra-colors-border-subtle); border-radius: 5px; color: var(--chakra-colors-accent); font-size: 25px; }
+.add-model span { display: grid; width: 40px; height: 40px; place-items: center; border: 1px dashed var(--chakra-colors-border-subtle); border-radius: 5px; color: var(--chakra-colors-accent); }
+.add-model span svg { width: 20px; height: 20px; }
 .add-model:hover span { background: var(--chakra-colors-bg-subtle); border-color: var(--chakra-colors-accent); }
 .add-model strong { font-size: 14px; font-weight: 600; }
 .add-model small { color: var(--chakra-colors-fg-muted); font-size: 12px; }

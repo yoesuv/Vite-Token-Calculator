@@ -18,8 +18,8 @@ const config = defineConfig({
   theme: {
     tokens: {
       fonts: {
-        body: { value: "'DM Sans', sans-serif" },
-        heading: { value: "'Space Grotesk', sans-serif" },
+        body: { value: "'Plus Jakarta Sans', sans-serif" },
+        heading: { value: "'Plus Jakarta Sans', sans-serif" },
         mono: { value: "'DM Mono', monospace" },
       },
     },

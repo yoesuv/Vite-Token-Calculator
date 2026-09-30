@@ -1,7 +1,7 @@
 .page-shell {
-  width: calc(100% - 64px);
+  width: calc(100% - 32px);
   margin: 0 auto;
-  padding: 16px 0 46px;
+  padding: 16px 0;
 }
 
 .blueprint-section {
@@ -298,8 +298,8 @@
 
 @media (max-width: 650px) {
   .page-shell {
-    width: min(100% - 64px, 1120px);
-    padding-top: 14px;
+    width: min(100% - 32px, 1120px);
+    padding-top: 12px;
   }
 
   .blueprint-section-one {

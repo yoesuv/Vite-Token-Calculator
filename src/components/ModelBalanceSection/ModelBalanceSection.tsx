@@ -9,6 +9,7 @@ import {
   sanitizeBalanceInput,
   type Currency,
 } from '../../lib/pricing'
+import { PlusIcon, UsageIcon, WalletIcon } from '../icons'
 import './ModelBalanceSection.css'
 
 // Mirrors the model API response so the temporary catalog can be replaced by an API response.
@@ -63,7 +64,10 @@ export function ModelBalanceSection({ currency, balance, onBalanceChange }: Mode
     <Box as="section" className="balance-section" aria-labelledby="balance-title">
       <Box className="balance-top">
         <Box className="balance-amount-block">
-          <Text className="balance-eyebrow">▱ &nbsp;AVAILABLE BALANCE</Text>
+          <Text className="balance-eyebrow">
+            <WalletIcon aria-hidden="true" />
+            <span>AVAILABLE BALANCE</span>
+          </Text>
           <HStack className="balance-input-row" gap="2">
             <Text className="currency-prefix">{config.symbol}</Text>
             <input id="balance-title" className="balance-input" aria-label={`Available balance in ${config.displayName}`} inputMode={config.inputMode} value={balanceFocused ? balance : formatBalanceForDisplay(balance, currency)} onFocus={() => setBalanceFocused(true)} onBlur={() => setBalanceFocused(false)} onChange={(event) => onBalanceChange(sanitizeBalanceInput(event.target.value, currency))} />
@@ -71,7 +75,10 @@ export function ModelBalanceSection({ currency, balance, onBalanceChange }: Mode
           <Text className="balance-help">Editing this value does not change your account balance.</Text>
         </Box>
         <Box className="usage-area">
-          <Button className="usage-button" onClick={() => setUsageOpen((open) => !open)} aria-expanded={usageOpen}>✣ &nbsp; Usage composition</Button>
+          <Button className="usage-button" onClick={() => setUsageOpen((open) => !open)} aria-expanded={usageOpen}>
+            <UsageIcon aria-hidden="true" />
+            <span>Usage composition</span>
+          </Button>
           <Text className="usage-caption">Cache read 90% · Input 9% · Output 1%</Text>
           {usageOpen && <Box className="usage-popover" role="status">Estimates assume 90% cache reads, 9% input tokens, and 1% output tokens.</Box>}
         </Box>
@@ -98,7 +105,7 @@ export function ModelBalanceSection({ currency, balance, onBalanceChange }: Mode
                 <Text className="coverage-note">tokens with the primary balance</Text>
               </Box>
               <HStack className="price-row" justify="space-between"><Text>Estimated price</Text><strong>{formatMoney(pricePerMillion(model, currency), currency)} / 1M tokens</strong></HStack>
-            </> : <button className="add-model" onClick={() => addModel(slot)} aria-label={`Add model to Compare ${slot}`}><span>+</span><strong>Compare {slot}</strong><small>Select a model below</small></button>}
+            </> : <button className="add-model" onClick={() => addModel(slot)} aria-label={`Add model to Compare ${slot}`}><span aria-hidden="true"><PlusIcon /></span><strong>Compare {slot}</strong><small>Select a model below</small></button>}
           </Box>
         })}
       </Box>

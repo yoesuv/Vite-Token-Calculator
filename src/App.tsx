@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Box, ChakraProvider, Theme } from '@chakra-ui/react'
 import AppHeader from './components/AppHeader/AppHeader'
 import { ModelBalanceSection } from './components/ModelBalanceSection/ModelBalanceSection'
+import { ModelPickerSection } from './components/ModelPickerSection/ModelPickerSection'
 import { convertBalance, CURRENCY_LIST, DEFAULT_BALANCE, type Currency } from './lib/pricing'
 import { system } from './theme'
 import { useColorMode } from './lib/useColorMode'
@@ -56,6 +57,7 @@ function AppShell() {
       />
       <Box as="main" className="page-shell">
         <ModelBalanceSection currency={currency} balance={balance} onBalanceChange={setBalance} />
+        <ModelPickerSection />
       </Box>
     </Theme>
   )
