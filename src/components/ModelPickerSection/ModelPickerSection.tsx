@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box, Skeleton, Text, VisuallyHidden } from "@chakra-ui/react";
-import { CheckIcon, PlusIcon, SearchIcon, XIcon } from "../icons";
+import { CheckIcon, InfoIcon, PlusIcon, SearchIcon, XIcon } from "../icons";
 import { describeError, fetchAiModels, type ApiModel } from "../../lib/models";
 import { ProviderMark } from "./ProviderMark";
 import "./ModelPickerSection.css";
@@ -28,6 +28,9 @@ const toPickerModel = (model: ApiModel): PickerModel => {
   };
 };
 
+/** Copy for the slots-full notice; shared by the banner and its hidden live region. */
+const LIMIT_NOTICE = "Five models selected. Remove one to compare another.";
+
 export function ModelPickerSection() {
   const [models, setModels] = useState<PickerModel[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
@@ -38,6 +41,9 @@ export function ModelPickerSection() {
   const [reloadKey, setReloadKey] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  // Bumped on every blocked "pick a 6th model" attempt; 0 = notice hidden.
+  // A counter (not a boolean) so every rejected click restarts the dismiss timer.
+  const [limitAlertKey, setLimitAlertKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +71,13 @@ export function ModelPickerSection() {
     };
   }, [reloadKey]);
 
+  // Auto-hide the limit notice shortly after the last blocked attempt.
+  useEffect(() => {
+    if (limitAlertKey === 0) return;
+    const timer = window.setTimeout(() => setLimitAlertKey(0), 4000);
+    return () => window.clearTimeout(timer);
+  }, [limitAlertKey]);
+
   const visibleModels = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return models.filter((model) =>
@@ -75,13 +88,18 @@ export function ModelPickerSection() {
   }, [models, query]);
 
   const toggleModel = (id: string) => {
-    setSelected((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : current.length < 5
-          ? [...current, id]
-          : current,
-    );
+    if (selected.includes(id)) {
+      setSelected((current) => current.filter((item) => item !== id));
+      // A slot freed up — the limit notice no longer applies.
+      setLimitAlertKey(0);
+      return;
+    }
+    if (selected.length >= 5) {
+      // Rejected pick: surface the notice instead of silently ignoring the click.
+      setLimitAlertKey((key) => key + 1);
+      return;
+    }
+    setSelected((current) => [...current, id]);
   };
 
   // Initial state is already 'loading'; retries re-set it here (event handler, not effect).
@@ -101,7 +119,7 @@ export function ModelPickerSection() {
       aria-busy={status === "loading"}
     >
       <div className="picker-intro">
-        <div>
+        <div className="picker-heading">
           <Text id="picker-title" className="picker-title">
             Choose model
           </Text>
@@ -142,6 +160,23 @@ export function ModelPickerSection() {
           })}
         </div>
       </div>
+      {/* Always mounted so enter AND exit transitions can play; the wrapper
+          collapses via the grid 0fr→1fr trick to animate its height. */}
+      <div
+        className={`picker-alert-region ${limitAlertKey > 0 ? "is-visible" : ""}`}
+      >
+        <p className="picker-alert">
+          <InfoIcon aria-hidden="true" />
+          {LIMIT_NOTICE}
+        </p>
+      </div>
+      {/* Persistent live region (more reliable than mounting/unmounting the
+          visible banner). The keyed child forces a DOM mutation on EVERY
+          rejected attempt, so screen readers re-announce instead of staying
+          silent when the notice is already shown. */}
+      <VisuallyHidden role="alert" aria-atomic="true">
+        {limitAlertKey > 0 && <span key={limitAlertKey}>{LIMIT_NOTICE}</span>}
+      </VisuallyHidden>
       <label className="picker-search">
         <SearchIcon aria-hidden="true" />
         <input
@@ -213,11 +248,6 @@ export function ModelPickerSection() {
           <p className="picker-empty">No models available yet.</p>
         )}
       </div>
-      {selected.length >= 5 && (
-        <p className="picker-limit">
-          Five models selected. Remove one to compare another.
-        </p>
-      )}
     </Box>
   );
 }

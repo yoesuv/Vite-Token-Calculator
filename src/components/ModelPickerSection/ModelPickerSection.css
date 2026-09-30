@@ -10,9 +10,10 @@
 }
 
 .picker-intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.picker-heading { flex: 1 1 300px; min-width: 280px; }
 .picker-title { color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 13px; font-weight: 500; letter-spacing: .8px; text-transform: uppercase; }
 .picker-description { margin-top: 7px; color: var(--chakra-colors-fg-muted); font-size: 15px; line-height: 1.5; }
-.picker-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; width: min(62%, 740px); flex: 0 0 min(62%, 740px); }
+.picker-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; flex: 2 1 680px; max-width: 840px; }
 .picker-slot { display: flex; min-width: 0; height: 54px; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 10px; background: var(--chakra-colors-bg-subtle); color: var(--chakra-colors-fg-muted); text-align: left; cursor: pointer; }
 .picker-slot-empty { justify-content: flex-start; gap: 5px; white-space: nowrap; font-size: 11px; }
 .picker-slot-empty > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -27,6 +28,16 @@
 .picker-plus { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px dashed var(--chakra-colors-border-subtle); border-radius: 9px; color: var(--chakra-colors-accent); }
 .picker-plus svg { width: 20px; height: 20px; }
 .picker-slot:hover { border-color: var(--chakra-colors-accent); }
+/* Limit notice: appears when the user tries to pick a 6th model, auto-dismisses after 4s.
+   Sits right under the slot row. The banner is always mounted; the wrapper collapses
+   via the grid 0fr→1fr trick so BOTH enter and exit animate smoothly. */
+.picker-alert-region { display: grid; overflow: hidden; grid-template-rows: 0fr; margin-top: 0; transition: grid-template-rows .26s cubic-bezier(.4,0,.2,1), margin-top .26s cubic-bezier(.4,0,.2,1); }
+.picker-alert-region.is-visible { grid-template-rows: 1fr; margin-top: 14px; }
+.picker-alert { display: flex; min-height: 0; overflow: hidden; visibility: hidden; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid color-mix(in srgb, var(--chakra-colors-accent) 40%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--chakra-colors-accent) 9%, var(--chakra-colors-bg-panel)); color: var(--chakra-colors-fg); font-size: 13px; opacity: 0; transform: translateY(-6px); transition: opacity .18s cubic-bezier(.4,0,.2,1), transform .26s cubic-bezier(.4,0,.2,1), visibility 0s linear .26s; }
+.picker-alert-region.is-visible .picker-alert { visibility: visible; opacity: 1; transform: none; transition: opacity .18s cubic-bezier(.4,0,.2,1), transform .26s cubic-bezier(.4,0,.2,1), visibility 0s; }
+.picker-alert svg { flex: 0 0 auto; width: 16px; height: 16px; color: var(--chakra-colors-accent); }
+.dark .picker-alert { background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-bg-panel)); }
+@media (prefers-reduced-motion: reduce) { .picker-alert-region,.picker-alert,.picker-alert-region.is-visible .picker-alert { transition: none; } }
 .picker-search { display: flex; height: 52px; align-items: center; gap: 12px; margin-top: 20px; padding: 0 16px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 10px; color: var(--chakra-colors-fg-muted); }
 .picker-search svg { width: 20px; height: 20px; }
 .picker-search > svg { flex: 0 0 20px; }
@@ -45,8 +56,7 @@
 .picker-model-copy small { font-size: 12px; }
 .picker-check { position: absolute; top: 9px; right: 9px; display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: var(--chakra-colors-accent); color: white; }
 .picker-check svg { width: 15px; height: 15px; }
-.picker-empty,.picker-limit,.picker-status { grid-column: 1 / -1; margin: 4px 0 0; color: var(--chakra-colors-fg-muted); font-size: 13px; }
-.picker-limit { color: var(--chakra-colors-fg-subtle); text-align: right; }
+.picker-empty,.picker-status { grid-column: 1 / -1; margin: 4px 0 0; color: var(--chakra-colors-fg-muted); font-size: 13px; }
 .picker-retry { margin-left: 10px; padding: 5px 12px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 8px; background: var(--chakra-colors-bg-subtle); color: var(--chakra-colors-fg); font: inherit; font-size: 12px; cursor: pointer; }
 .picker-retry:hover { border-color: var(--chakra-colors-accent); }
 /* Skeleton placeholders mirror the model-card sizing. */
@@ -54,7 +64,8 @@
 
 @media (max-width: 1000px) {
   .picker-intro { align-items: flex-start; flex-direction: column; }
-  .picker-slots { width: 100%; flex-basis: auto; }
+  .picker-heading { flex: initial; min-width: 0; }
+  .picker-slots { width: 100%; flex-basis: auto; max-width: none; }
   .picker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {

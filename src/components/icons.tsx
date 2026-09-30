@@ -1,6 +1,7 @@
 import { Icon, type IconProps } from "@chakra-ui/react";
 import {
   LuCheck,
+  LuInfo,
   LuMoon,
   LuPlus,
   LuSearch,
@@ -49,4 +50,5 @@ export const CalculatorIcon = glyph(LuCalculator);
 export const PlusIcon = glyph(LuPlus);
 export const SearchIcon = glyph(LuSearch);
 export const CheckIcon = glyph(LuCheck);
+export const InfoIcon = glyph(LuInfo);
 export const XIcon = glyph(LuX);
