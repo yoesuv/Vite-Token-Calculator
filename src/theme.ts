@@ -43,7 +43,7 @@ const config = defineConfig({
           subtle: { value: { _light: '#d5d5d5', _dark: '#3d3b35' } },
         },
         // Brand accent — shared by both modes.
-        accent: { value: { _light: '#ed694c', _dark: '#ed694c' } },
+        accent: { value: { _light: '#D94F68', _dark: '#FF788D' } },
         // Form controls.
         'input-bg': { value: { _light: '#fafafa', _dark: '#1b1a18' } },
         'focus-ring': { value: { _light: '#11111118', _dark: '#f2f0ea18' } },

@@ -19,12 +19,16 @@ import {
   XiaomiMiMo,
   Zhipu,
 } from "@lobehub/icons";
+import "./ProviderMark.css";
 
 /**
  * Brand mark per API provider from `@lobehub/icons`. Multi-color brands use
  * their `.Color` variant; monochrome brands render with `currentColor`, tinted
  * by the `.provider-*` chip CSS. Icons default to `1em`, so the chip's
  * `font-size` keeps sizing them.
+ *
+ * Shared by the picker grid, the picker slot strip, and the comparison slots —
+ * see ProviderMark.css for the chip styling.
  */
 type ProviderIcon = ComponentType<{ size?: string | number }>;
 const providerIcons: Record<string, ProviderIcon> = {
@@ -60,7 +64,7 @@ export function ProviderMark({ provider }: { provider: string }) {
     ? providerIcons[provider]
     : undefined;
   return (
-    <span className={`picker-provider provider-${provider}`}>
+    <span className={`provider-mark provider-${provider}`}>
       {Icon ? <Icon /> : provider.charAt(0).toUpperCase()}
     </span>
   );

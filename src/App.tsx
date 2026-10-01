@@ -3,6 +3,7 @@ import { Box, ChakraProvider, Theme } from '@chakra-ui/react'
 import AppHeader from './components/AppHeader/AppHeader'
 import { ModelBalanceSection } from './components/ModelBalanceSection/ModelBalanceSection'
 import { ModelPickerSection } from './components/ModelPickerSection/ModelPickerSection'
+import { ModelSelectionProvider } from './lib/ModelSelectionProvider'
 import { convertBalance, CURRENCY_LIST, DEFAULT_BALANCE, type Currency } from './lib/pricing'
 import { system } from './theme'
 import { useColorMode } from './lib/useColorMode'
@@ -56,8 +57,12 @@ function AppShell() {
         onCurrencyChange={switchCurrency}
       />
       <Box as="main" className="page-shell">
-        <ModelBalanceSection currency={currency} balance={balance} onBalanceChange={setBalance} />
-        <ModelPickerSection />
+        {/* One provider feeds both sections: the catalog is fetched once and the
+            picker's selection is what the comparison slots render. */}
+        <ModelSelectionProvider>
+          <ModelBalanceSection currency={currency} balance={balance} onBalanceChange={setBalance} />
+          <ModelPickerSection />
+        </ModelSelectionProvider>
       </Box>
     </Theme>
   )

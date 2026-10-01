@@ -27,8 +27,8 @@ import {
  * The brand mark (`TokenIcon`) stays a bespoke `createIcon` glyph — it is
  * product identity, not a generic UI symbol.
  *
- * Model/provider slot marks are intentionally NOT here — those come from the
- * catalog assets and are drawn per-model in ModelBalanceSection.
+ * Model/provider slot marks are intentionally NOT here — those are brand logos
+ * rendered by the shared <ProviderMark> component (src/components/ProviderMark.tsx).
  */
 
 /** Wrap a react-icons SVG component so it renders through Chakra's <Icon>. */

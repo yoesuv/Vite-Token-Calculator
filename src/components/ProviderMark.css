@@ -1,0 +1,36 @@
+/* Shared provider chip: the 38px brand mark used by the model picker grid,
+   the picker slot strip, and the comparison slots in ModelBalanceSection.
+   Owned by ProviderMark.tsx so call sites never depend on another section's
+   stylesheet for the chip's size or tint. */
+.provider-mark {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 9px;
+  background: var(--chakra-colors-icon-bg);
+  color: var(--chakra-colors-icon-fg);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.provider-mark svg {
+  display: block;
+}
+
+/* Brand tints override the neutral chip. Two classes (.provider-mark.provider-*)
+   keep these winning over the base rule regardless of stylesheet order. */
+.provider-mark.provider-anthropic,
+.provider-mark.provider-claude {
+  background: var(--chakra-colors-icon-bg-1);
+  color: var(--chakra-colors-icon-fg-1);
+  font-size: 24px;
+}
+
+.provider-mark.provider-deepseek,
+.provider-mark.provider-glm {
+  background: var(--chakra-colors-icon-bg-2);
+  color: var(--chakra-colors-icon-fg-2);
+}

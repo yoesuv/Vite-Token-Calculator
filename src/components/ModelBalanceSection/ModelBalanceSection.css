@@ -64,10 +64,9 @@
    → .provider-mark (fixed 38px) + .model-ident (flex: 1 1 auto, min-width: 0)
    → strong/small clip to a single line with an ellipsis. */
 .model-select-label { display: flex; align-items: center; gap: 11px; width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; }
-.provider-mark { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 5px; background: var(--chakra-colors-icon-bg); color: var(--chakra-colors-icon-fg); font-size: 21px; }
-.provider-mark-1 { background: var(--chakra-colors-icon-bg-1); color: var(--chakra-colors-icon-fg-1); }
-.provider-mark-2 { background: var(--chakra-colors-icon-bg-2); color: var(--chakra-colors-icon-fg-2); }
-.provider-mark-3 { background: var(--chakra-colors-icon-bg-1); color: var(--chakra-colors-icon-fg-1); }
+/* Sharp corners to match this section's blueprint cards; size and brand tints
+   come from ProviderMark.css. */
+.model-select-label .provider-mark { border-radius: 5px; }
 .model-ident { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 3px; }
 .model-ident strong { overflow: hidden; color: var(--chakra-colors-fg); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .model-ident small { overflow: hidden; color: var(--chakra-colors-fg-subtle); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -76,7 +75,9 @@
 .coverage-label,
 .coverage-note { color: var(--chakra-colors-fg-muted); font-size: 12px; }
 .coverage-value { margin: 0; color: var(--chakra-colors-accent); font-family: var(--chakra-fonts-heading); font-size: 30px; font-weight: 500; line-height: 1.25; }
-.price-row { margin-top: 12px; gap: 8px; color: var(--chakra-colors-fg-muted); font-size: 11px; }
+/* Two published rates: the block owns the top spacing so the rows stay tight. */
+.price-block { display: grid; gap: 3px; margin-top: 12px; }
+.price-row { gap: 8px; color: var(--chakra-colors-fg-muted); font-size: 11px; }
 .price-row strong { color: var(--chakra-colors-fg); font-size: 12px; white-space: nowrap; }
 
 .add-model { display: flex; width: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--chakra-colors-fg); cursor: pointer; }
@@ -84,6 +85,15 @@
 .add-model span svg { width: 20px; height: 20px; }
 .add-model:hover span { background: var(--chakra-colors-bg-subtle); border-color: var(--chakra-colors-accent); }
 .add-model strong { font-size: 14px; font-weight: 600; }
+
+/* Catalog still loading: skeleton cards mirror the filled slot's blocks so the
+   row height does not jump when the API responds. */
+.slot-skeleton-name { margin-top: 16px; }
+.slot-skeleton-panel { margin-top: 16px; min-height: 82px; }
+
+/* Catalog failed: one full-width panel instead of empty slots. */
+.slot-state { display: flex; grid-column: 1 / -1; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; color: var(--chakra-colors-fg-muted); font-size: 13px; text-align: center; }
+.slot-retry { padding: 6px 14px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 3px; background: var(--chakra-colors-bg-subtle); color: var(--chakra-colors-fg); font-size: 12px; }
 .add-model small { color: var(--chakra-colors-fg-muted); font-size: 12px; }
 
 @media (max-width: 850px) {
