@@ -125,8 +125,11 @@ export const convertAmount = (value: number, from: Currency, to: Currency): numb
 /**
  * How many tokens the balance (in the selected currency) covers at the model's
  * blended rate for `mix`. Cache-read tokens count in the total — they are tokens
- * you paid to process. Guarded: returns 0 tokens when the row has no usable rate
- * at all (every column missing or zero) or the mix is empty.
+ * you paid to process. Guarded: returns 0 whenever the blended rate works out to
+ * 0, which now covers three cases — the mix is empty, the model publishes no rate
+ * for any column the mix weights, or every weighted rate is a published 0. Read
+ * that 0 with `isUnlimitedCoverage` before displaying it: a $0 rate means free,
+ * not worthless.
  */
 export const coverageTokens = (
   balance: number,
@@ -138,6 +141,61 @@ export const coverageTokens = (
   if (price <= 0) return 0
   const balanceUSD = balance / currencyConfig(currency).perUSD
   return Math.floor((balanceUSD / price) * 1_000_000)
+}
+
+/**
+ * True when the mix weights only rates the catalog calls free (`0`) or absent.
+ * Per modelCatalog — "no cache rate means free cache reads by policy" — a $0
+ * blend is *unbounded* coverage, not unaffordable coverage: the same balance
+ * buys an unlimited number of tokens at that mix. So `coverageTokens`' 0 guard
+ * must never be rendered as a token count when this returns true.
+ *
+ * An empty mix (every share 0) is not free, it is meaningless; the sliders
+ * cannot build one, but the total check keeps a hand-made mix from claiming ∞.
+ */
+export const isUnlimitedCoverage = (model: PricedModel, mix: UsageMix): boolean =>
+  mix.cache + mix.input + mix.output > 0 && blendedPricePerMillionUSD(model, mix) <= 0
+
+/** Biggest first, so a count always lands on the smallest suffix under 1000. */
+const TOKEN_SCALES = [
+  { limit: 1_000_000_000_000, suffix: 'T', decimals: 0 },
+  { limit: 1_000_000_000, suffix: 'B', decimals: 2 },
+  { limit: 1_000_000, suffix: 'M', decimals: 2 },
+  { limit: 1_000, suffix: 'K', decimals: 1 },
+] as const
+
+/** Split so the UI can set the number and its suffix at different sizes. */
+export type TokenCount = { value: string; unit: string }
+
+/**
+ * Scale a token count for display: 66_666_666 → `66.67` + `M`, 5_000_000_000 →
+ * `5.00` + `B`, 420_000 → `420.0` + `K`, 812 → `812` + no unit (grouped per the
+ * active currency's locale). The unit comes back separate so the JSX can render
+ * it as `.coverage-unit`; one node would inherit the 30px headline size and
+ * stretch `999.99M` past the 180px minimum slot width.
+ *
+ * Formatting the scale here means a near-free mix never prints `5000.00M` and a
+ * small balance never prints `0.00M`. T drops its decimals: it only carries
+ * counts in the hundreds, and a fixed digit budget keeps the widest string
+ * inside a narrow slot.
+ */
+export const formatTokenCount = (tokens: number, currency: Currency): TokenCount => {
+  const count = Math.max(0, Math.floor(tokens))
+  const tier = TOKEN_SCALES.find(({ limit }) => count >= limit)
+  if (!tier) {
+    return { value: count.toLocaleString(currencyConfig(currency).locale), unit: '' }
+  }
+  /*
+   * 999_999_999 is under 1B but its M reading rounds up to `1000.00M`, and a
+   * four-digit head is what overflows a narrow slot. Step one tier up instead:
+   * `1.00B` says the same thing inside the digit budget. T is the widest tier, so
+   * it has nothing to step to and keeps `5000T`.
+   */
+  const wider = TOKEN_SCALES[TOKEN_SCALES.indexOf(tier) - 1]
+  if (wider && Number((count / tier.limit).toFixed(tier.decimals)) >= 1000) {
+    return { value: (count / wider.limit).toFixed(wider.decimals), unit: wider.suffix }
+  }
+  return { value: (count / tier.limit).toFixed(tier.decimals), unit: tier.suffix }
 }
 
 const moneyFormatter = (currency: Currency): Intl.NumberFormat =>
