@@ -51,13 +51,23 @@
 .picker-search button { display: grid; place-items: center; border: 0; background: transparent; color: var(--chakra-colors-fg-muted); cursor: pointer; }
 .picker-search button svg { width: 18px; height: 18px; }
 .picker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
-.picker-model { position: relative; display: flex; min-width: 0; min-height: 62px; align-items: center; gap: 12px; padding: 7px 12px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 11px; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg); text-align: left; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.picker-model { position: relative; display: flex; width: 100%; min-width: 0; min-height: 62px; align-items: center; gap: 12px; padding: 7px 62px 7px 12px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 11px; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg); text-align: left; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
 .picker-model:hover { border-color: var(--chakra-colors-accent); background: var(--chakra-colors-bg-subtle); }
 .picker-model.is-selected { border-color: var(--chakra-colors-accent); background: color-mix(in srgb, var(--chakra-colors-bg-panel) 93%, var(--chakra-colors-accent)); }
 .dark .picker-model.is-selected { background: color-mix(in srgb, var(--chakra-colors-bg-panel) 86%, var(--chakra-colors-accent)); }
 .picker-model-copy strong { font-size: 14px; }
 .picker-model-copy small { font-size: 12px; }
-.picker-check { position: absolute; top: 9px; right: 9px; display: grid; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: var(--chakra-colors-accent); color: white; }
+/* Corner cluster: the selected check + the info popover trigger (<ModelInfoPopover>,
+   whose own look lives in ModelInfoPopover.css), layered over the card button
+   (later in the DOM, so they win pointer events). The card reserves
+   .picker-model's right padding so copy text never runs underneath. */
+.picker-model-wrap { position: relative; min-width: 0; }
+.picker-model-actions { position: absolute; top: 50%; right: 8px; display: flex; align-items: center; gap: 6px; transform: translateY(-50%); pointer-events: none; }
+/* The cluster sits above the selectable tile, so it must be click-through
+   (container + decorative .picker-check inherit none) to keep the whole tile
+   toggling. Only the real control — the info trigger — opts back in. */
+.picker-model-actions .picker-info { pointer-events: auto; }
+.picker-check { display: grid; flex: 0 0 auto; width: 23px; height: 23px; place-items: center; border-radius: 50%; background: var(--chakra-colors-accent); color: white; }
 .picker-check svg { width: 15px; height: 15px; }
 .picker-empty,.picker-status { grid-column: 1 / -1; margin: 4px 0 0; color: var(--chakra-colors-fg-muted); font-size: 13px; }
 .picker-retry { margin-left: 10px; padding: 5px 12px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 8px; background: var(--chakra-colors-bg-subtle); color: var(--chakra-colors-fg); font: inherit; font-size: 12px; cursor: pointer; }
@@ -80,7 +90,7 @@
   .picker-slot-copy strong { font-size: 11px; }
   .picker-slot-copy small { font-size: 9px; }
   .picker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .picker-model { min-height: 68px; gap: 10px; padding: 8px; }
+  .picker-model { min-height: 68px; gap: 10px; padding: 8px 62px 8px 8px; }
   .picker-skeleton { min-height: 68px; }
   .picker-model .provider-mark { flex-basis: 34px; width: 34px; height: 34px; }
   .picker-model-copy strong { font-size: 12px; }

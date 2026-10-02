@@ -19,18 +19,3 @@
 .provider-mark svg {
   display: block;
 }
-
-/* Brand tints override the neutral chip. Two classes (.provider-mark.provider-*)
-   keep these winning over the base rule regardless of stylesheet order. */
-.provider-mark.provider-anthropic,
-.provider-mark.provider-claude {
-  background: var(--chakra-colors-icon-bg-1);
-  color: var(--chakra-colors-icon-fg-1);
-  font-size: 24px;
-}
-
-.provider-mark.provider-deepseek,
-.provider-mark.provider-glm {
-  background: var(--chakra-colors-icon-bg-2);
-  color: var(--chakra-colors-icon-fg-2);
-}

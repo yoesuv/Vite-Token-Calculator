@@ -61,7 +61,7 @@ function AppShell() {
             picker's selection is what the comparison slots render. */}
         <ModelSelectionProvider>
           <ModelBalanceSection currency={currency} balance={balance} onBalanceChange={setBalance} />
-          <ModelPickerSection />
+          <ModelPickerSection currency={currency} />
         </ModelSelectionProvider>
       </Box>
     </Theme>
