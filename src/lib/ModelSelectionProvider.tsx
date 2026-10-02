@@ -11,10 +11,14 @@ import {
 } from 'react'
 import { describeError, fetchAiModels } from './models'
 import { MAX_SELECTED, sortForDisplay, toCatalogModels, type CatalogModel } from './modelCatalog'
+import { persistRates, readPersistedRates, type ExchangeRates } from './pricing'
 import { ModelSelectionContext, type ModelSelection, type SelectionStatus } from './useModelSelection'
 
 export function ModelSelectionProvider({ children }: { children: ReactNode }) {
   const [models, setModels] = useState<CatalogModel[]>([])
+  // Seeded from the last successful load so the first paint already prices in
+  // the catalog's own FX rate instead of the registry default (see pricing.ts).
+  const [rates, setRates] = useState<ExchangeRates>(readPersistedRates)
   const [status, setStatus] = useState<SelectionStatus>('loading')
   const [errorMessage, setErrorMessage] = useState('')
   // Bumped by the retry button to re-run the fetch effect.
@@ -28,7 +32,7 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
     fetchAiModels()
-      .then((apiModels) => {
+      .then(({ models: apiModels, rates: nextRates }) => {
         if (cancelled) return
         const next = sortForDisplay(toCatalogModels(apiModels))
         // Default primary = row 0 of the display order, i.e. the same model as
@@ -36,6 +40,13 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
         const primaryId = next.length > 0 ? next[0].id : ''
         const nextIds = new Set(next.map((model) => model.id))
         setModels(next)
+        // An empty table means this response published no usable `currency`, so
+        // keep what is already in hand (cache, then registry default) rather than
+        // regressing to the assumed rate on every reload.
+        if (Object.keys(nextRates).length > 0) {
+          setRates(nextRates)
+          persistRates(nextRates)
+        }
         // Drop selections the (re)loaded catalog no longer contains, so the
         // limit check counts only models that are really compared.
         setSelectedIds((current) =>
@@ -139,6 +150,7 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ModelSelection>(
     () => ({
       models,
+      rates,
       status,
       errorMessage,
       retry,
@@ -151,6 +163,7 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
     }),
     [
       models,
+      rates,
       status,
       errorMessage,
       retry,

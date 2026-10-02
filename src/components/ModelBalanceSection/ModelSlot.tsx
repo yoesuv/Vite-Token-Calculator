@@ -4,7 +4,7 @@ import {
   formatPriceInfo,
   formatTokenCount,
   isUnlimitedCoverage,
-  type Currency,
+  type Fx,
   type UsageMix,
 } from "../../lib/pricing";
 import { type CatalogModel } from "../../lib/modelCatalog";
@@ -22,7 +22,8 @@ type ModelSlotProps = {
   model: CatalogModel | undefined;
   /** Numeric balance — the raw string is parsed once by the parent. */
   balance: number;
-  currency: Currency;
+  /** Active currency + catalog FX rate. */
+  fx: Fx;
   usageMix: UsageMix;
   onAdd: () => void;
   onClear: (id: string) => void;
@@ -39,7 +40,7 @@ export function ModelSlot({
   slot,
   model,
   balance,
-  currency,
+  fx,
   usageMix,
   onAdd,
   onClear,
@@ -72,8 +73,8 @@ export function ModelSlot({
   // buys unlimited tokens, so the 0 from coverageTokens' guard must not render.
   const unlimited = isUnlimitedCoverage(model, usageMix);
   const coverage = formatTokenCount(
-    coverageTokens(balance, model, currency, usageMix),
-    currency,
+    coverageTokens(balance, model, fx, usageMix),
+    fx,
   );
 
   return (
@@ -120,16 +121,16 @@ export function ModelSlot({
         </Text>
       </Box>
       {/* Both rates come straight from the catalog (`input`/`output`, US cents
-          per 1M) and render in the active currency: 200 → $2.00 / Rp 33.000,
-          1000 → $10.00 / Rp 165.000. */}
+          per 1M) and render in the active currency at the active FX rate: 200 →
+          $2.00 / Rp 30.000 and 1000 → $10.00 / Rp 150.000 at `15000` IDR. */}
       <Box className="price-block">
         <HStack className="price-row" justify="space-between">
           <Text>Input price</Text>
-          <strong>{formatPriceInfo(model, "input", currency)} / 1M</strong>
+          <strong>{formatPriceInfo(model, "input", fx)} / 1M</strong>
         </HStack>
         <HStack className="price-row" justify="space-between">
           <Text>Output price</Text>
-          <strong>{formatPriceInfo(model, "output", currency)} / 1M</strong>
+          <strong>{formatPriceInfo(model, "output", fx)} / 1M</strong>
         </HStack>
       </Box>
     </Box>

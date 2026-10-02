@@ -3,6 +3,7 @@
 // Refresh keeps working and eslint's react-refresh rule stays satisfied.
 import { createContext, useContext } from 'react'
 import { type CatalogModel } from './modelCatalog'
+import { type ExchangeRates } from './pricing'
 
 export type SelectionStatus = 'loading' | 'ready' | 'error'
 
@@ -10,6 +11,12 @@ export type SelectionStatus = 'loading' | 'ready' | 'error'
 export type ModelSelection = {
   /** Every catalog row, in display order (alphabetical by full API name). */
   models: CatalogModel[]
+  /**
+   * FX table (units per 1 USD) derived from the catalog's `currency` field,
+   * seeded from localStorage. Empty when neither has a rate, which is the cue
+   * for `ratePerUSD` to use the registry default.
+   */
+  rates: ExchangeRates
   /** Catalog fetch state; the picker and the slots render from the same copy. */
   status: SelectionStatus
   errorMessage: string

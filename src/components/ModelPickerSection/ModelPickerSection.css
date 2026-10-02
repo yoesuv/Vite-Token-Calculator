@@ -12,7 +12,7 @@
 .picker-intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .picker-heading { flex: 1 1 300px; min-width: 280px; }
 .picker-title { color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 13px; font-weight: 500; letter-spacing: .8px; text-transform: uppercase; }
-.picker-description { margin-top: 7px; color: var(--chakra-colors-fg-muted); font-size: 15px; line-height: 1.5; }
+.picker-description { margin-top: 7px; color: var(--chakra-colors-fg-muted); font-size: 13px; line-height: 1.5; }
 /* +5% per chip: 162px -> 170px. The 882px cap is what binds on wide screens;
    flex-basis 714 keeps the same ratio in the 1001-1400px band, where the
    heading's min-width (280px) absorbs the difference. Below the 1000px breakpoint

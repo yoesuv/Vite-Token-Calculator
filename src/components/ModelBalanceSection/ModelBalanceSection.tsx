@@ -12,7 +12,7 @@ import {
   DEFAULT_USAGE_MIX,
   formatBalanceForDisplay,
   sanitizeBalanceInput,
-  type Currency,
+  type Fx,
   type UsageMix,
 } from "../../lib/pricing";
 import { MAX_SELECTED } from "../../lib/modelCatalog";
@@ -23,7 +23,8 @@ import { UsageCompositionDialog } from "./UsageCompositionDialog";
 import "./ModelBalanceSection.css";
 
 type ModelBalanceSectionProps = {
-  currency: Currency;
+  /** Active currency + catalog FX rate, resolved once by <Workspace>. */
+  fx: Fx;
   balance: string;
   onBalanceChange: (balance: string) => void;
 };
@@ -40,7 +41,7 @@ const mixCaption = (mix: UsageMix) =>
  * the next free slot here — and clearing one unchecks it in the picker.
  */
 export function ModelBalanceSection({
-  currency,
+  fx,
   balance,
   onBalanceChange,
 }: ModelBalanceSectionProps) {
@@ -59,7 +60,7 @@ export function ModelBalanceSection({
   // While editing, show raw digits so the cursor behaves; format with separators only when blurred.
   const [balanceFocused, setBalanceFocused] = useState(false);
   const numericBalance = Number(balance) || 0;
-  const config = currencyConfig(currency);
+  const config = currencyConfig(fx.currency);
 
   return (
     <Box
@@ -74,29 +75,66 @@ export function ModelBalanceSection({
             <WalletIcon aria-hidden="true" />
             <span>AVAILABLE BALANCE</span>
           </Text>
-          <HStack className="balance-input-row" gap="2">
-            <Text className="currency-prefix">{config.symbol}</Text>
-            <input
-              id="balance-title"
-              className="balance-input"
-              aria-label={`Available balance in ${config.displayName}`}
-              inputMode={config.inputMode}
-              value={
-                balanceFocused
-                  ? balance
-                  : formatBalanceForDisplay(balance, currency)
-              }
-              onFocus={() => setBalanceFocused(true)}
-              onBlur={() => setBalanceFocused(false)}
-              onChange={(event) =>
-                onBalanceChange(
-                  sanitizeBalanceInput(event.target.value, currency),
-                )
-              }
-            />
+          {/* The section names itself after `#balance-title` — the input's id.
+              While the input is swapped for the loading skeleton below, this
+              stand-in keeps that aria-labelledby reference resolving to the
+              same phrase instead of dangling. */}
+          {status === "loading" && (
+            <VisuallyHidden id="balance-title">
+              Available balance in {config.displayName}
+            </VisuallyHidden>
+          )}
+          <HStack
+            className={`balance-input-row${
+              status === "loading" ? " is-loading" : ""
+            }`}
+            gap="2"
+          >
+            {status === "loading" ? (
+              /* The catalog carries the live rate this figure is denominated
+                 in, so until it lands any number here could be the wrong one
+                 (17920 placeholder vs 15000 live) and would visibly swap when
+                 the response arrives. Shimmer two blocks in the row's own
+                 frame instead — same approach as the slot skeletons below. */
+              <>
+                <Skeleton
+                  className="balance-skeleton-symbol"
+                  h="24px"
+                  w="34px"
+                  borderRadius="4px"
+                />
+                <Skeleton
+                  className="balance-skeleton-amount"
+                  flex="1"
+                  borderRadius="6px"
+                />
+              </>
+            ) : (
+              <>
+                <Text className="currency-prefix">{config.symbol}</Text>
+                <input
+                  id="balance-title"
+                  className="balance-input"
+                  aria-label={`Available balance in ${config.displayName}`}
+                  inputMode={config.inputMode}
+                  value={
+                    balanceFocused
+                      ? balance
+                      : formatBalanceForDisplay(balance, fx.currency)
+                  }
+                  onFocus={() => setBalanceFocused(true)}
+                  onBlur={() => setBalanceFocused(false)}
+                  onChange={(event) =>
+                    onBalanceChange(
+                      sanitizeBalanceInput(event.target.value, fx.currency),
+                    )
+                  }
+                />
+              </>
+            )}
           </HStack>
           <Text className="balance-help">
-            Editing this value does not change your account balance.
+            Adjust this amount to compare model costs against your balance.
           </Text>
         </Box>
         <Box className="usage-area">
@@ -161,7 +199,7 @@ export function ModelBalanceSection({
               slot={slot}
               model={selectedModels[slot]}
               balance={numericBalance}
-              currency={currency}
+              fx={fx}
               usageMix={usageMix}
               onAdd={addFirstAvailable}
               onClear={removeModel}

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Box, Skeleton, Text, VisuallyHidden } from "@chakra-ui/react";
 import { CheckIcon, InfoIcon, PlusIcon, SearchIcon, XIcon } from "../icons";
 import { MAX_SELECTED, type CatalogModel } from "../../lib/modelCatalog";
-import { type Currency } from "../../lib/pricing";
+import { makeFx, type Fx } from "../../lib/pricing";
 import { useModelSelection } from "../../lib/useModelSelection";
 import { ProviderMark } from "../ProviderMark";
 import { ModelInfoPopover } from "./ModelInfoPopover";
@@ -18,13 +18,14 @@ const LIMIT_NOTICE = "Five models selected. Remove one to compare another.";
  * Model catalog browser. Selection state lives in <ModelSelectionProvider> so
  * the comparison slots in ModelBalanceSection mirror every pick here.
  *
- * `currency` prices the per-model info popovers; it defaults to USD so the
- * section still renders standalone, but App passes the app's active currency.
+ * `fx` prices the per-model info popovers; it defaults to USD at the registry
+ * rate so the section still renders standalone, but App passes the active
+ * currency together with the catalog's FX table.
  */
 export function ModelPickerSection({
-  currency = "USD",
+  fx = makeFx("USD"),
 }: {
-  currency?: Currency;
+  fx?: Fx;
 } = {}) {
   const {
     models,
@@ -62,7 +63,7 @@ export function ModelPickerSection({
             Choose model
           </Text>
           <Text className="picker-description">
-            Compare up to five models using the same balance and usage mix.
+            Choose up to five models to compare costs with your balance and usage mix.
           </Text>
         </div>
         <div className="picker-slots" aria-label="Selected models">
@@ -158,7 +159,7 @@ export function ModelPickerSection({
             <ModelCard
               key={model.id}
               model={model}
-              currency={currency}
+              fx={fx}
               isSelected={selectedIds.includes(model.id)}
               onToggle={() => toggleModel(model.id)}
             />
@@ -186,12 +187,12 @@ export function ModelPickerSection({
 function ModelCard({
   model,
   isSelected,
-  currency,
+  fx,
   onToggle,
 }: {
   model: CatalogModel;
   isSelected: boolean;
-  currency: Currency;
+  fx: Fx;
   onToggle: () => void;
 }) {
   return (
@@ -214,7 +215,7 @@ function ModelCard({
             <CheckIcon />
           </span>
         )}
-        <ModelInfoPopover model={model} currency={currency} />
+        <ModelInfoPopover model={model} fx={fx} />
       </div>
     </div>
   );

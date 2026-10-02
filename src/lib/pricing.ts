@@ -4,10 +4,16 @@
 // ships no cache-write premium.
 // Coverage prices a blend of all three rates at the shares in DEFAULT_USAGE_MIX,
 // so the assumption behind the number is visible instead of input-only.
+// Currency conversion uses the catalog's own FX figure: a row may carry
+// `currency: [{ IDR: 15000 }]` meaning *1 USD = 15000 IDR*. The `perUSD` values
+// in the registry below are only the fallback while no live rate is known.
 
 /**
- * Currency registry — the single source of truth. To add a currency (e.g. EUR,
- * JPY), append one entry here; every helper below and the UI adapt automatically.
+ * Currency registry — the single source of truth for everything the API does
+ * *not* publish: symbol, locale, fraction digits, and the fallback rate. To add
+ * a currency (e.g. EUR, JPY), append one entry here and teach
+ * `exchangeRatesFromRows` in modelCatalog.ts to accept its code; every helper
+ * below and the UI adapt automatically.
  */
 export const CURRENCIES = {
   IDR: {
@@ -15,12 +21,10 @@ export const CURRENCIES = {
     code: 'IDR',
     symbol: 'Rp',
     displayName: 'Rupiah',
-    /** Units of this currency per 1 USD (assumed rate). */
+    /** Units of this currency per 1 USD, used until the catalog publishes one. */
     perUSD: 17920,
     /** BCP 47 locale used for number formatting. */
     locale: 'id-ID',
-    /** Balance shown before the user edits the field (≈ USD 1). */
-    defaultBalance: '17920',
     /** Fraction digits accepted/displayed for this currency. */
     maxDecimals: 0,
     /** Keyboard hint for the balance input. */
@@ -32,7 +36,6 @@ export const CURRENCIES = {
     displayName: 'US dollar',
     perUSD: 1,
     locale: 'en-US',
-    defaultBalance: '1',
     maxDecimals: 2,
     inputMode: 'decimal' as const,
   },
@@ -44,16 +47,64 @@ export type CurrencyConfig = (typeof CURRENCIES)[Currency]
 /** All supported currencies in display order (the app-bar select lists these). */
 export const CURRENCY_LIST = Object.keys(CURRENCIES) as Currency[]
 
-/** Default balance string per currency (≈ USD 1 at the assumed rate). */
-export const DEFAULT_BALANCE = Object.fromEntries(
-  CURRENCY_LIST.map((code) => [code, CURRENCIES[code].defaultBalance]),
-) as Record<Currency, string>
+/**
+ * Runtime narrowing of an API/localStorage currency code to a `Currency`. The
+ * catalog's `currency` keys and the persisted rate table are plain strings, and
+ * `Object.keys(CURRENCIES).includes` would type-error against `Currency`.
+ */
+export const isSupportedCurrency = (code: string): code is Currency =>
+  Object.hasOwn(CURRENCIES, code)
 
 /** Convenience read of a currency's config; throws only on programmer error. */
 export const currencyConfig = (currency: Currency): CurrencyConfig => CURRENCIES[currency]
 
 const isPositive = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0
+
+/**
+ * Live USD rates published by the model catalog, keyed by supported currency.
+ * A missing key means the catalog published nothing usable for that code, so
+ * the registry default applies.
+ */
+export type ExchangeRates = Partial<Record<Currency, number>>
+
+/** Empty rate table — every lookup falls back to `CURRENCIES[..].perUSD`. */
+export const EMPTY_RATES: ExchangeRates = {}
+
+/**
+ * The active display currency bundled with the rates it converts through.
+ * One object instead of a `currency` plus a `rates` parameter pair: a call site
+ * cannot forward the active currency without the rate table that goes with it,
+ * so prices and coverage can never disagree about what a dollar is worth.
+ */
+export type Fx = { currency: Currency; rates: ExchangeRates }
+
+export const makeFx = (currency: Currency, rates: ExchangeRates = EMPTY_RATES): Fx => ({
+  currency,
+  rates,
+})
+
+/**
+ * Units of `currency` per 1 USD: the catalog's live rate when it published a
+ * usable one, otherwise the registry default. USD is pinned to the registry (1)
+ * rather than read from the response — its rate is the definition of the table,
+ * not a figure to be overridden by an API row.
+ */
+export const ratePerUSD = (fx: Fx, currency: Currency = fx.currency): number => {
+  if (currency === 'USD') return CURRENCIES.USD.perUSD
+  const live = fx.rates[currency]
+  return isPositive(live) ? live : CURRENCIES[currency].perUSD
+}
+
+/**
+ * The starting balance for `fx`: ≈ USD 1 at the rate actually in use, so a live
+ * `15000` seeds `15000` and the static fallback seeds `17920`. Trimmed to the
+ * currency's fraction digits (USD → `1`).
+ */
+export const defaultBalanceFor = (fx: Fx, currency: Currency = fx.currency): string => {
+  const factor = 10 ** CURRENCIES[currency].maxDecimals
+  return String(Math.round(ratePerUSD(fx, currency) * factor) / factor)
+}
 
 /** Which per-token rate to read off a catalog row; the API ships all three, in cents. */
 export type PriceKind = 'input' | 'output' | 'cache'
@@ -89,13 +140,15 @@ export const pricePerMillionUSD = (model: PricedModel, kind: PriceKind): number 
   centsToUSD(model[kind])
 
 /**
- * Price per 1M tokens in the app's active currency. The catalog only publishes
- * USD, so USD mode is the figure as-is and IDR scales through that currency's
- * `perUSD` rate — the same rate the balance and coverage use, so the two never
+ * Price per 1M tokens in the active currency. The catalog publishes prices in
+ * USD and the FX figure in the same response, so USD mode is the published
+ * figure as-is and every other currency scales through `ratePerUSD` — the live
+ * catalog rate when there is one, the registry default otherwise. The same rate
+ * prices the rates, the balance and the coverage, so the three can never
  * disagree about what a dollar is worth.
  */
-export const pricePerMillion = (model: PricedModel, kind: PriceKind, currency: Currency): number =>
-  pricePerMillionUSD(model, kind) * currencyConfig(currency).perUSD
+export const pricePerMillion = (model: PricedModel, kind: PriceKind, fx: Fx): number =>
+  pricePerMillionUSD(model, kind) * ratePerUSD(fx)
 
 /**
  * Blended USD per 1M *processed* tokens for the mix: every share pays its own
@@ -118,9 +171,11 @@ export const blendedPricePerMillionUSD = (model: PricedModel, mix: UsageMix): nu
   ) / total
 }
 
-/** Convert an amount between supported currencies via each currency's perUSD rate. */
-export const convertAmount = (value: number, from: Currency, to: Currency): number =>
-  from === to ? value : (value / currencyConfig(from).perUSD) * currencyConfig(to).perUSD
+/** Convert an amount between supported currencies at one rate table. */
+export const convertAmount = (value: number, from: Currency, to: Currency, rates: ExchangeRates): number =>
+  from === to
+    ? value
+    : (value / ratePerUSD(makeFx(from, rates))) * ratePerUSD(makeFx(to, rates))
 
 /**
  * How many tokens the balance (in the selected currency) covers at the model's
@@ -134,12 +189,12 @@ export const convertAmount = (value: number, from: Currency, to: Currency): numb
 export const coverageTokens = (
   balance: number,
   model: PricedModel,
-  currency: Currency,
+  fx: Fx,
   mix: UsageMix,
 ): number => {
   const price = blendedPricePerMillionUSD(model, mix)
   if (price <= 0) return 0
-  const balanceUSD = balance / currencyConfig(currency).perUSD
+  const balanceUSD = balance / ratePerUSD(fx)
   return Math.floor((balanceUSD / price) * 1_000_000)
 }
 
@@ -179,11 +234,11 @@ export type TokenCount = { value: string; unit: string }
  * counts in the hundreds, and a fixed digit budget keeps the widest string
  * inside a narrow slot.
  */
-export const formatTokenCount = (tokens: number, currency: Currency): TokenCount => {
+export const formatTokenCount = (tokens: number, fx: Fx): TokenCount => {
   const count = Math.max(0, Math.floor(tokens))
   const tier = TOKEN_SCALES.find(({ limit }) => count >= limit)
   if (!tier) {
-    return { value: count.toLocaleString(currencyConfig(currency).locale), unit: '' }
+    return { value: count.toLocaleString(currencyConfig(fx.currency).locale), unit: '' }
   }
   /*
    * 999_999_999 is under 1B but its M reading rounds up to `1000.00M`, and a
@@ -219,9 +274,10 @@ export const formatMoney = (value: number, currency: Currency): string =>
 
 /**
  * The published per-1M rate for the requested kind, shown in the active
- * currency: `output: 1000` reads `$10.00` in USD mode and `Rp 165.000` in IDR
- * mode. Only the display unit changes — no token math, the number is still the
- * catalog's own price.
+ * currency at the active rate: `output: 1000` cents is `$10.00` in USD mode and
+ * `Rp 150.000` when the catalog publishes `15000` IDR per USD (or `Rp 165.000`
+ * on the static fallback). Only the display unit and the FX figure change — no
+ * token math, the USD number is still the catalog's own price.
  *
  * A published `0` renders as a free rate (`$0.00`); only a missing or unusable
  * column falls back to the em dash, so "free" and "unknown" stay distinguishable.
@@ -229,11 +285,11 @@ export const formatMoney = (value: number, currency: Currency): string =>
 export const formatPriceInfo = (
   model: PricedModel,
   kind: PriceKind,
-  currency: Currency,
+  fx: Fx,
 ): string => {
   const cents = model[kind]
   const published = typeof cents === 'number' && Number.isFinite(cents) && cents >= 0
-  return published ? formatMoney(pricePerMillion(model, kind, currency), currency) : PRICE_UNAVAILABLE
+  return published ? formatMoney(pricePerMillion(model, kind, fx), fx.currency) : PRICE_UNAVAILABLE
 }
 
 /** Format a raw balance string for display when the field is not focused. */
@@ -242,13 +298,16 @@ export const formatBalanceForDisplay = (balance: string, currency: Currency): st
 
 /**
  * Convert a raw balance input string between currencies, keeping the value
- * equivalent at the assumed rates. Trailing decimals are trimmed to the target
- * currency's fraction digits.
+ * equivalent at the active rate table (the catalog's, or the registry defaults
+ * until it arrives). Trailing decimals are trimmed to the target currency's
+ * fraction digits.
  */
-export const convertBalance = (balance: string, from: Currency, to: Currency): string => {
-  if (from === to) return balance
-  const factor = 10 ** currencyConfig(to).maxDecimals
-  return String(Math.round(convertAmount(Number(balance) || 0, from, to) * factor) / factor)
+export const convertBalance = (balance: string, from: Fx, to: Fx): string => {
+  if (from.currency === to.currency) return balance
+  const factor = 10 ** currencyConfig(to.currency).maxDecimals
+  return String(
+    Math.round(convertAmount(Number(balance) || 0, from.currency, to.currency, to.rates) * factor) / factor,
+  )
 }
 
 /** Keep raw user input valid for the selected currency while editing. */
@@ -256,4 +315,50 @@ export const sanitizeBalanceInput = (raw: string, currency: Currency): string =>
   const { maxDecimals } = currencyConfig(currency)
   if (maxDecimals === 0) return raw.replace(/\D/g, '')
   return raw.match(new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}`))?.[0] ?? ''
+}
+
+/** Key holding the last successful catalog rate table (see persistRates). */
+const RATES_STORAGE_KEY = 'exchangeRates'
+
+/**
+ * Read the persisted rate table written by the previous successful catalog load.
+ * Returns `EMPTY_RATES` when nothing is stored, the JSON is corrupt, or the
+ * shape is wrong — a stale or hand-edited entry must degrade to the registry
+ * defaults rather than throw during the first render.
+ *
+ * Unknown codes are dropped on read as well as on write: `Currency` is derived
+ * from `CURRENCIES`, so a cached `EUR` would type as supported and then read
+ * `CURRENCIES.EUR` as `undefined`.
+ */
+export const readPersistedRates = (): ExchangeRates => {
+  try {
+    const stored = localStorage.getItem(RATES_STORAGE_KEY)
+    if (!stored) return EMPTY_RATES
+    const parsed: unknown = JSON.parse(stored)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return EMPTY_RATES
+    const rates: ExchangeRates = {}
+    for (const [code, value] of Object.entries(parsed)) {
+      if (isSupportedCurrency(code) && code !== 'USD' && isPositive(value)) rates[code] = value
+    }
+    return rates
+  } catch {
+    // Storage may be unavailable (private browsing, restricted embeds), or the
+    // payload may not be JSON. Either way: fall back to the registry defaults.
+    return EMPTY_RATES
+  }
+}
+
+/**
+ * Persist a rate table for the next visit. Skips an empty table so a catalog
+ * that publishes no `currency` field cannot wipe a good cached rate, and stays
+ * silent on quota/availability errors — the rate is a display refinement, never
+ * worth a visible failure.
+ */
+export const persistRates = (rates: ExchangeRates): void => {
+  if (Object.keys(rates).length === 0) return
+  try {
+    localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify(rates))
+  } catch {
+    // Keep the in-memory rate table; nothing else depends on the cache.
+  }
 }

@@ -37,10 +37,49 @@
 
 .balance-eyebrow { display: inline-flex; align-items: center; gap: 6px; color: var(--chakra-colors-accent); }
 .balance-eyebrow svg { width: 13px; height: 13px; }
-.balance-input-row { margin-top: 8px; }
-.currency-prefix { color: var(--chakra-colors-fg-muted); font-size: 20px; }
-.balance-input { width: 230px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--chakra-colors-fg-heading); font-family: var(--chakra-fonts-heading); font-size: 38px; font-weight: 500; }
-.balance-input:focus-visible { border-bottom: 2px solid var(--chakra-colors-button-bg); }
+.balance-input-row {
+  display: flex;
+  width: min(100%, 480px);
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 6px;
+  background: var(--chakra-colors-bg-subtle);
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+.balance-input-row:hover { border-color: var(--chakra-colors-border); }
+/* Loading state: the row only holds shimmer bars, so it must not read as an
+   interactive field (no hover/focus affordance) while there is nothing to type.
+   Also set on the skeletons themselves by Chakra's skeleton recipe. */
+.balance-input-row.is-loading { pointer-events: none; }
+.balance-input-row:focus-within {
+  border-color: var(--chakra-colors-focus-ring);
+  background: var(--chakra-colors-bg-panel);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-focus-ring) 22%, transparent);
+}
+.currency-prefix { flex: 0 0 auto; color: var(--chakra-colors-fg-muted); font-size: 20px; }
+.balance-input {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--chakra-colors-fg-heading);
+  font-family: var(--chakra-fonts-heading);
+  font-size: 38px;
+  font-weight: 500;
+}
+.balance-input:focus-visible { outline: 0; }
+/* Catalog loading: shimmer bars stand in for prefix + amount (see
+   ModelBalanceSection.tsx). The amount bar is sized in CSS, not a Chakra `h`
+   prop, so the same media query as `.balance-input` can track its 38px → 32px
+   font step and the row keeps one height across the swap. */
+.balance-skeleton-symbol { align-self: center; }
+.balance-skeleton-amount { height: 48px; }
 .balance-help,
 .usage-caption { margin-top: 8px; color: var(--chakra-colors-fg-muted); font-size: 12px; }
 
@@ -159,7 +198,8 @@
 @media (max-width: 560px) {
   .balance-section { padding: 24px 20px 18px; }
   .balance-top { flex-direction: column; }
-  .balance-input { width: 180px; font-size: 32px; }
+  .balance-input { font-size: 32px; }
+  .balance-skeleton-amount { height: 40px; }
   .usage-area { width: 100%; text-align: left; }
   .usage-button { width: 100%; }
   .model-slots { grid-template-columns: 1fr; margin-top: 12px; }

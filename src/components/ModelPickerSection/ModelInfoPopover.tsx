@@ -1,7 +1,7 @@
 import { Portal, Popover } from "@chakra-ui/react";
 import { InfoIcon } from "../icons";
 import { type CatalogModel } from "../../lib/modelCatalog";
-import { formatPriceInfo, type Currency } from "../../lib/pricing";
+import { formatPriceInfo, type Fx } from "../../lib/pricing";
 import { ProviderMark } from "../ProviderMark";
 import "./ModelInfoPopover.css";
 
@@ -42,20 +42,20 @@ const formatModalities = (modalities: string[] | null | undefined): string =>
 
 /**
  * Rows rendered in the info popover. Each value is a pure function of the
- * catalog row (plus the active currency for prices), so adding a fact is one
- * line here and the layout stays a flat label/value list.
+ * catalog row (plus the active currency and its FX rate for prices), so adding a
+ * fact is one line here and the layout stays a flat label/value list.
  */
 const MODEL_FACTS: {
   key: string;
   label: string;
-  value: (model: CatalogModel, currency: Currency) => string;
+  value: (model: CatalogModel, fx: Fx) => string;
   /** Returning false drops the row entirely (e.g. an unpublished cutoff). */
   show?: (model: CatalogModel) => boolean;
 }[] = [
   { key: "provider", label: "Provider", value: (m) => formatProvider(m.provider) },
-  { key: "input", label: "Input · per 1M", value: (m, c) => formatPriceInfo(m, "input", c) },
-  { key: "output", label: "Output · per 1M", value: (m, c) => formatPriceInfo(m, "output", c) },
-  { key: "cache", label: "Cache read · per 1M", value: (m, c) => formatPriceInfo(m, "cache", c) },
+  { key: "input", label: "Input · per 1M", value: (m, fx) => formatPriceInfo(m, "input", fx) },
+  { key: "output", label: "Output · per 1M", value: (m, fx) => formatPriceInfo(m, "output", fx) },
+  { key: "cache", label: "Cache read · per 1M", value: (m, fx) => formatPriceInfo(m, "cache", fx) },
   { key: "context", label: "Context", value: (m) => formatContext(m.context) },
   { key: "modalities", label: "Modalities", value: (m) => formatModalities(m.modalities) },
   { key: "released", label: "Released", value: (m) => formatTimestamp(m.released) },
@@ -81,10 +81,10 @@ const MODEL_FACTS: {
  */
 export function ModelInfoPopover({
   model,
-  currency,
+  fx,
 }: {
   model: CatalogModel;
-  currency: Currency;
+  fx: Fx;
 }) {
   return (
     <Popover.Root positioning={{ placement: "bottom-end" }}>
@@ -116,7 +116,7 @@ export function ModelInfoPopover({
                   (fact) => (
                     <div className="picker-pop-row" key={fact.key}>
                       <dt>{fact.label}</dt>
-                      <dd>{fact.value(model, currency)}</dd>
+                      <dd>{fact.value(model, fx)}</dd>
                     </div>
                   ),
                 )}
