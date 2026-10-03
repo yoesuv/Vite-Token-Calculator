@@ -150,14 +150,24 @@
 }
 
 @media (max-width: 650px) {
+  /* Three action pills (currency · theme · about) can't share a single row
+     with the brand at phone widths, so stack the controls onto their own row
+     below the title. `flex-wrap` is a last-resort guard for very narrow
+     viewports; the nowrap on .app-title that caused the overlap is removed
+     because the brand row is now full-width. */
   .app-bar-inner {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     width: min(100% - 28px, 1120px);
-    min-height: 57px;
-    gap: 8px;
+    gap: 10px;
+    min-height: 0;
+    padding: 12px 0;
   }
 
   .brand-block {
-    flex: 1;
+    flex: 0 0 auto;
+    width: 100%;
     min-width: 0;
     gap: 14px;
   }
@@ -180,12 +190,17 @@
   .app-title {
     font-size: 18px;
     letter-spacing: -0.6px;
-    white-space: nowrap;
   }
 
   .app-subtitle {
     margin-top: 2px;
     font-size: 10px;
+  }
+
+  .app-bar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .theme-toggle {

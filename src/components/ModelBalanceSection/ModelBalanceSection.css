@@ -175,7 +175,15 @@
 .price-row { gap: 8px; color: var(--chakra-colors-fg-muted); font-size: 11px; }
 .price-row strong { color: var(--chakra-colors-fg); font-size: 12px; white-space: nowrap; }
 
-.add-model { display: flex; width: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--chakra-colors-fg); cursor: pointer; }
+/* Empty placeholder: the :first-child/:last-child padding trims let filled
+   slots align to the section edges, but they leave the placeholder's + icon /
+   label / hint off-center inside its card. Reset to symmetric padding with
+   higher specificity than the trim rules above. */
+.model-slot.empty-slot { padding: 14px 18px; }
+.model-slot.empty-slot:first-child { padding-left: 18px; }
+.model-slot.empty-slot:last-child { padding-right: 18px; }
+
+.add-model { display: flex; width: 100%; height: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--chakra-colors-fg); cursor: pointer; }
 .add-model span { display: grid; width: 40px; height: 40px; place-items: center; border: 1px dashed var(--chakra-colors-border-subtle); border-radius: 5px; color: var(--chakra-colors-accent); }
 .add-model span svg { width: 20px; height: 20px; }
 .add-model:hover span { background: var(--chakra-colors-bg-subtle); border-color: var(--chakra-colors-accent); }

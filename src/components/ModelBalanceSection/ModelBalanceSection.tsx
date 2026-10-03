@@ -178,6 +178,13 @@ export function ModelBalanceSection({
                   h="82px"
                   borderRadius="3px"
                 />
+                {/* Mirror the filled slot's price block (two price rows) so the
+                    loading card matches its final height and the row does not
+                    jump when the catalog responds. */}
+                <Box className="price-block">
+                  <Skeleton h="15px" w="70%" borderRadius="3px" />
+                  <Skeleton h="15px" w="55%" borderRadius="3px" />
+                </Box>
               </Box>
             ))}
           </>

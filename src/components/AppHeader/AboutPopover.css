@@ -1,0 +1,113 @@
+/* About trigger: a pill styled to match .theme-toggle / .currency-select. */
+.about-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 999px;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg-muted);
+  font-family: var(--chakra-fonts-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.about-toggle:hover,
+.about-toggle:focus-visible {
+  border-color: var(--chakra-colors-accent);
+  color: var(--chakra-colors-accent);
+  outline: none;
+}
+
+.about-toggle:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent);
+}
+
+.about-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.about-toggle-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* About popover panel: same panel look as .picker-pop. */
+.about-pop {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+}
+
+.about-pop-title {
+  color: var(--chakra-colors-fg-heading);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.about-pop-text {
+  margin: 0 0 12px;
+  color: var(--chakra-colors-fg-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.about-pop-version {
+  margin: 0 0 10px;
+  color: var(--chakra-colors-fg-subtle);
+  font-family: var(--chakra-fonts-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.about-pop-links {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--chakra-colors-border-subtle);
+}
+
+.about-pop-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 999px;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.about-pop-link:hover,
+.about-pop-link:focus-visible {
+  border-color: var(--chakra-colors-accent);
+  color: var(--chakra-colors-accent);
+  outline: none;
+}
+
+.about-pop-link-icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.about-pop-link-icon svg {
+  width: 13px;
+  height: 13px;
+}

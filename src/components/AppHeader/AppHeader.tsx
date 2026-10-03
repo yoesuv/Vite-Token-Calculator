@@ -6,6 +6,7 @@ import {
 } from "../../lib/pricing";
 import type { ColorMode } from "../../lib/useColorMode";
 import { MoonIcon, SunIcon, CalculatorIcon } from "../icons";
+import { AboutPopover } from "./AboutPopover";
 import "./AppHeader.css";
 
 type AppHeaderProps = {
@@ -67,6 +68,7 @@ function AppHeader({
             </span>
             {isDark ? "Light" : "Dark"}
           </Button>
+          <AboutPopover />
         </HStack>
       </Box>
     </Box>

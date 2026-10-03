@@ -1,75 +1,38 @@
-# React + TypeScript + Vite
+# Token Calculator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Information
 
-Currently, two official plugins are available:
+Token Calculator is a browser-based tool for estimating how far your money goes with AI models. Enter your available balance in your local currency and compare how many tokens it buys across multiple models side by side.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Model pricing and FX rates come from a live, Firebase App Check–protected model catalog
+- Adjustable usage composition (cache read / input / output mix) so estimates match real workloads
+- Per-slot coverage estimate, plus input and output prices per 1M tokens in the active currency
+- Multi-currency support (e.g. IDR, USD) with catalog-published rates and locale-aware formatting
+- Runs entirely in the browser — no account required
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [React 19](https://react.dev) + TypeScript
+- [Vite](https://vite.dev) for dev tooling and builds
+- [Chakra UI 3](https://chakra-ui.com) for the component system and theming (light/dark color mode)
+- [Firebase](https://firebase.google.com) (App Check) for securing the catalog endpoint
+- [Axios](https://axios-http.com) for catalog transport
 
-## Expanding the ESLint configuration
+## Packages
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Extra libraries beyond the React/Vite/Chakra framework itself:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- @chakra-ui/react
+- firebase
+- axios
+- @lobehub/icons
+- react-icons
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Scripts
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm run dev      # start the dev server
+npm run build    # type-check and build for production
+npm run lint     # run ESLint
+npm run preview  # preview the production build
 ```
