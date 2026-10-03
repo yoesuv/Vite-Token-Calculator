@@ -106,6 +106,16 @@ export const defaultBalanceFor = (fx: Fx, currency: Currency = fx.currency): str
   return String(Math.round(ratePerUSD(fx, currency) * factor) / factor)
 }
 
+/**
+ * Largest balance (in `currency`'s own units) that survives the trip through
+ * `Number` intact: `MAX_SAFE_INTEGER` minor units, so a whole amount here is an
+ * exact integer of cents/rupiah and the `* 1_000_000 / price` in `coverageTokens`
+ * cannot overflow to `Infinity`. One shared ceiling for the input sanitizer and
+ * the coverage guard, so the two can never disagree about a valid amount.
+ */
+export const maxSafeBalance = (currency: Currency): number =>
+  Number.MAX_SAFE_INTEGER / 10 ** currencyConfig(currency).maxDecimals
+
 /** Which per-token rate to read off a catalog row; the API ships all three, in cents. */
 export type PriceKind = 'input' | 'output' | 'cache'
 
@@ -310,11 +320,64 @@ export const convertBalance = (balance: string, from: Fx, to: Fx): string => {
   )
 }
 
-/** Keep raw user input valid for the selected currency while editing. */
+/**
+ * The locale's real grouping and decimal separators, read from `Intl` itself
+ * rather than assumed. Cached per currency — these are locale constants, so the
+ * work of `formatToParts` is paid once, not on every keystroke.
+ *
+ * Needed because `formatBalanceForDisplay` *renders* with these separators
+ * (USD `1,000.00`, IDR `15.000`) and the input must be able to *re-read* the
+ * same string: strip the group mark, fold the decimal mark to `.` (the only
+ * separator the precision regex understands), and only then validate.
+ */
+const localeSeparators = (() => {
+  const cache = new Map<Currency, { group: string; decimal: string }>()
+  return (currency: Currency) => {
+    const hit = cache.get(currency)
+    if (hit) return hit
+    const parts = new Intl.NumberFormat(currencyConfig(currency).locale).formatToParts(1234567.5)
+    const find = (type: Intl.NumberFormatPartTypes) =>
+      parts.find((p) => p.type === type)?.value ?? ''
+    const sep = { group: find('group'), decimal: find('decimal') }
+    cache.set(currency, sep)
+    return sep
+  }
+})()
+
+/**
+ * Keep raw user input valid for the selected currency while editing.
+ *
+ * Paste is the case that matters: a copied `1,000.00` (USD) or `15.000`
+ * (IDR) is the app's *own* formatted output, so the locale's grouping/decimal
+ * separators are resolved and stripped first and must never be read as digits.
+ * Otherwise `1,000.00` collapses to `1` (it stopped at the group comma) and an
+ * id-ID decimal comma `1,50` (= 1.50) explodes to `150`. A currency with no
+ * fraction digits keeps only the leading integer run, so `1,50` is floored to
+ * `1` rather than merged into `150`.
+ */
 export const sanitizeBalanceInput = (raw: string, currency: Currency): string => {
   const { maxDecimals } = currencyConfig(currency)
-  if (maxDecimals === 0) return raw.replace(/\D/g, '')
-  return raw.match(new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}`))?.[0] ?? ''
+  const { group, decimal } = localeSeparators(currency)
+  // A balance is non-negative: a minus sign anywhere makes the amount ambiguous,
+  // so reject it rather than drop the sign and silently flip the value.
+  if (/[-\u2212]/.test(raw)) return ''
+  let value = raw
+  if (group) value = value.split(group).join('')
+  if (decimal && decimal !== '.') value = value.split(decimal).join('.')
+  // Drop a leading label a paste may carry ("Rp ", "$"). Stripped from the front
+  // only, so punctuation between digits (e.g. "12:30") is never merged into a
+  // larger number; a leading "." is kept so ".50" stays 0.50, not 50.
+  value = value.replace(/^[^\d.]+/, '')
+  const trimmed =
+    maxDecimals === 0
+      ? value.match(/^\d*/)?.[0] ?? ''
+      : value.match(new RegExp(`^\\d*\\.?\\d{0,${maxDecimals}}`))?.[0] ?? ''
+  // A balance is a real amount of money, not a stress test: past the currency's
+  // safe ceiling `Number` cannot represent it (it overflows to Infinity, and the
+  // derived token count overflows with it), so reject rather than let the field
+  // render the symbol for infinity and every slot render `InfinityT`.
+  if (trimmed && !(Number(trimmed) <= maxSafeBalance(currency))) return ''
+  return trimmed
 }
 
 /** Key holding the last successful catalog rate table (see persistRates). */

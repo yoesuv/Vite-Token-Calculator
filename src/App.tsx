@@ -75,8 +75,13 @@ function Workspace({
   // `null` = the placeholder the user never touched: the displayed balance is
   // *derived* below from `currency` and the catalog's rates (≈ USD 1), so a rate
   // arriving or a currency switch re-derives it in the same render — no reseed
-  // effect, no ref sentinel, no extra pass. Only a typed value is stored.
-  const [enteredBalance, setEnteredBalance] = useState<string | null>(null)
+  // effect, no ref sentinel, no extra pass. Once typed, the amount is stored with
+  // the currency it was entered in, so switching is pure display conversion and
+  // the original value survives the round trip instead of accumulating the
+  // destination currency's rounding on every switch.
+  const [balanceInput, setBalanceInput] = useState<
+    { amount: string; currency: Currency } | null
+  >(null)
 
   useEffect(() => {
     try { localStorage.setItem('currency', currency) } catch { /* Keep the currency in memory. */ }
@@ -86,21 +91,30 @@ function Workspace({
 
   // Derived: the placeholder means "≈ USD 1" at whatever rate is active, so it
   // reads 15000 while the catalog says 15000 and 17920 until it says anything.
-  const balance = enteredBalance ?? defaultBalanceFor(fx)
+  // A typed value is held in the currency it was entered in and only converted
+  // (rounded to the active display precision) for this render — the stored amount
+  // itself never changes, so IDR → USD → IDR returns to the original.
+  const balance =
+    balanceInput === null
+      ? defaultBalanceFor(fx)
+      : balanceInput.currency === currency
+        ? balanceInput.amount
+        : convertBalance(balanceInput.amount, makeFx(balanceInput.currency, rates), fx)
 
-  const handleBalanceChange = useCallback((next: string) => {
-    setEnteredBalance(next)
-  }, [])
+  const handleBalanceChange = useCallback(
+    (next: string) => {
+      setBalanceInput({ amount: next, currency })
+    },
+    [currency],
+  )
 
   const switchCurrency = (next: Currency) => {
     if (next === currency) return
-    // Convert at the incoming rate table, then make the new `Fx` explicit: both
-    // sides of one switch must use the same USD figure or the converted balance
-    // would contradict the prices it is about to be compared against. An
-    // untouched placeholder stays null and re-derives as ≈ USD 1 in `next`.
-    setEnteredBalance((current) =>
-      current === null ? null : convertBalance(current, fx, makeFx(next, rates)),
-    )
+    // Only the active currency changes. The stored amount (and the currency it
+    // was entered in) is left intact, so the derivation above re-converts from
+    // the same original each switch instead of feeding the previous round's
+    // rounded value back in and compounding the loss. An untouched placeholder
+    // re-derives as ≈ USD 1 in `next`.
     setCurrency(next)
   }
 

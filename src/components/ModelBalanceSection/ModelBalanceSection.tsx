@@ -11,6 +11,7 @@ import {
   currencyConfig,
   DEFAULT_USAGE_MIX,
   formatBalanceForDisplay,
+  maxSafeBalance,
   sanitizeBalanceInput,
   type Fx,
   type UsageMix,
@@ -59,7 +60,17 @@ export function ModelBalanceSection({
   const usageTriggerRef = useRef<HTMLButtonElement | null>(null);
   // While editing, show raw digits so the cursor behaves; format with separators only when blurred.
   const [balanceFocused, setBalanceFocused] = useState(false);
-  const numericBalance = Number(balance) || 0;
+  // `Number(balance) || 0` would hand `Infinity` straight to the coverage math for
+  // an absurd paste (or a currency switch that scales up), and `formatTokenCount`
+  // renders `InfinityT` in every slot. Same `maxSafeBalance` ceiling the input
+  // sanitizer enforces, so the two never disagree about a usable amount.
+  const parsedBalance = Number(balance);
+  const numericBalance =
+    Number.isFinite(parsedBalance) &&
+    parsedBalance >= 0 &&
+    parsedBalance <= maxSafeBalance(fx.currency)
+      ? parsedBalance
+      : 0;
   const config = currencyConfig(fx.currency);
 
   return (

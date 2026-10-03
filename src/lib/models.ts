@@ -4,11 +4,49 @@
 // contract); this module is transport only.
 import axios from 'axios'
 import { getToken } from 'firebase/app-check'
-import { appCheck } from './firebase'
+import { appCheck, configErrorMessage } from './firebase'
 import { validateCatalogRows, exchangeRatesFromRows, type Catalog } from './modelCatalog'
 
 // Model-catalog endpoint, configured per environment (see .env.example).
 const AI_MODELS_URL = import.meta.env.VITE_AI_MODELS_URL
+
+/** Hosts the Firebase emulator can serve over plain `http` in dev. */
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
+
+/**
+ * Resolve the catalog endpoint from raw config, failing closed on the two ways a
+ * mis-set `VITE_AI_MODELS_URL` misbehaves instead of erroring cleanly:
+ *  - an empty or relative value makes axios hit the *current origin*, sending the
+ *    App Check token to the wrong route; `new URL` rejects anything not absolute.
+ *  - a plain-`http` URL sends that token unencrypted. Production must be `https:`;
+ *    dev may use `http:` only for the emulator's loopback host, where transport
+ *    encryption is moot.
+ */
+function resolveModelsEndpoint(): string {
+  const raw = AI_MODELS_URL?.trim()
+  if (!raw) {
+    throw new Error(
+      'Missing required configuration: VITE_AI_MODELS_URL. Copy .env.example to .env.local, fill it in, and restart the dev server.',
+    )
+  }
+  let endpoint: URL
+  try {
+    endpoint = new URL(raw)
+  } catch {
+    throw new Error(
+      `VITE_AI_MODELS_URL must be an absolute URL, got "${raw}" — a relative URL sends the App Check token to the current page.`,
+    )
+  }
+  const loopbackHttp = endpoint.protocol === 'http:' && LOOPBACK_HOSTS.has(endpoint.hostname)
+  if (endpoint.protocol === 'https:' || (loopbackHttp && import.meta.env.DEV)) {
+    return endpoint.href
+  }
+  throw new Error(
+    loopbackHttp
+      ? 'VITE_AI_MODELS_URL may use http only for the local emulator in development; production requires https.'
+      : 'VITE_AI_MODELS_URL must be an https URL so the App Check token is never sent unencrypted.',
+  )
+}
 
 /**
  * Fetch the model catalog and the FX rate it publishes with it. `getToken`
@@ -20,10 +58,18 @@ const AI_MODELS_URL = import.meta.env.VITE_AI_MODELS_URL
  * figure that converts them.
  */
 export async function fetchAiModels(): Promise<Catalog> {
+  // App Check is `null` only when required config is unset (see firebase.ts).
+  // Fail with the named-missing-config message rather than a "use-before-
+  // activation" error that would describe a bug the operator never caused.
+  if (!appCheck) throw new Error(configErrorMessage)
+  // Validate the endpoint *before* minting a token: a relative or plain-http
+  // value would otherwise send the App Check token to the wrong route or
+  // unencrypted rather than failing with a clear message.
+  const endpoint = resolveModelsEndpoint()
   const { token } = await getToken(appCheck)
   // `unknown`, not ApiModel[]: nothing about the response is trusted until
   // validateCatalogRows has checked ids, names, and the price columns.
-  const response = await axios.get<unknown>(AI_MODELS_URL, {
+  const response = await axios.get<unknown>(endpoint, {
     headers: { 'X-Firebase-AppCheck': token },
     // Finite timeout so a stalled request reaches the error/retry UI.
     timeout: 15000,
