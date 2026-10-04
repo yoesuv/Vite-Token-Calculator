@@ -35,7 +35,7 @@ import {
 function glyph(Glyph: React.ComponentType<{ size?: number | string }>) {
   return function GlyphIcon(props: IconProps) {
     return (
-      <Icon {...props}>
+      <Icon {...props} asChild>
         <Glyph />
       </Icon>
     );

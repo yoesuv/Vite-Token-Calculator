@@ -71,6 +71,7 @@ export function ModelPickerSection({
             const model = selectedModels[slot];
             return model ? (
               <button
+                type="button"
                 className="picker-slot picker-slot-selected"
                 key={slot}
                 onClick={() => toggleModel(model.id)}
@@ -84,11 +85,17 @@ export function ModelPickerSection({
               </button>
             ) : (
               <button
+                type="button"
                 className="picker-slot picker-slot-empty"
                 key={slot}
                 onClick={() => addFirstAvailable(visibleModels)}
-                // Nothing to add until the catalog arrives.
-                disabled={status !== "ready"}
+                // Nothing to add until the catalog arrives, and nothing to add
+                // once every catalog model is already selected (avoids a
+                // silent no-op from addFirstAvailable).
+                disabled={
+                  status !== "ready" ||
+                  !models.some((model) => !selectedIds.includes(model.id))
+                }
               >
                 <span className="picker-plus">
                   <PlusIcon />
@@ -104,10 +111,12 @@ export function ModelPickerSection({
       <div
         className={`picker-alert-region ${limitAlertKey > 0 ? "is-visible" : ""}`}
       >
-        <p className="picker-alert">
-          <InfoIcon aria-hidden="true" />
-          {LIMIT_NOTICE}
-        </p>
+        <div className="picker-alert-inner">
+          <p className="picker-alert">
+            <InfoIcon aria-hidden="true" />
+            {LIMIT_NOTICE}
+          </p>
+        </div>
       </div>
       {/* Persistent live region (more reliable than mounting/unmounting the
           visible banner). The keyed child forces a DOM mutation on EVERY

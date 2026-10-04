@@ -4,7 +4,10 @@
 .picker-info { display: grid; flex: 0 0 auto; width: 24px; height: 24px; place-items: center; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 50%; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg-muted); cursor: pointer; transition: color .15s ease, border-color .15s ease; }
 .picker-info svg { width: 14px; height: 14px; }
 .picker-info:hover { color: var(--chakra-colors-accent); border-color: var(--chakra-colors-accent); }
-.picker-info:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent); }
+/* The outline is the forced-colors-safe channel: box-shadow alone is dropped
+   in forced-colors mode (Windows High Contrast), so the halo stays as a light
+   decoration while the real indicator rides the outline. */
+.picker-info:focus-visible { outline: 2px solid var(--chakra-colors-accent); outline-offset: 2px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent); }
 .dark .picker-info { background: var(--chakra-colors-bg-subtle); }
 
 /* Info popover panel: fixed width so prices/dates don't jitter. */
@@ -20,5 +23,8 @@
 .picker-pop-title small { display: block; color: var(--chakra-colors-fg-subtle); font-size: 12px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .picker-pop-rows { display: flex; flex-direction: column; gap: 6px; margin: 0; }
 .picker-pop-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.picker-pop-row dt { color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 11px; }
-.picker-pop-row dd { margin: 0; color: var(--chakra-colors-fg); font-size: 12.5px; text-align: right; }
+/* Provider slugs are raw, unspaced API tokens (e.g. `moonshotai`), and the panel
+   is fixed-width, so a long one would push the row past the panel edge. Let both
+   cells shrink and break like `.picker-pop-title small` above so nothing overflows. */
+.picker-pop-row dt { min-width: 0; overflow-wrap: anywhere; word-break: break-word; color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 11px; }
+.picker-pop-row dd { min-width: 0; overflow-wrap: anywhere; word-break: break-word; margin: 0; color: var(--chakra-colors-fg); font-size: 12.5px; text-align: right; }

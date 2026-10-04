@@ -36,7 +36,10 @@
    via the grid 0fr→1fr trick so BOTH enter and exit animate smoothly. */
 .picker-alert-region { display: grid; overflow: hidden; grid-template-rows: 0fr; margin-top: 0; transition: grid-template-rows .26s cubic-bezier(.4,0,.2,1), margin-top .26s cubic-bezier(.4,0,.2,1); }
 .picker-alert-region.is-visible { grid-template-rows: 1fr; margin-top: 14px; }
-.picker-alert { display: flex; min-height: 0; overflow: hidden; visibility: hidden; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid color-mix(in srgb, var(--chakra-colors-accent) 40%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--chakra-colors-accent) 9%, var(--chakra-colors-bg-panel)); color: var(--chakra-colors-fg); font-size: 13px; opacity: 0; transform: translateY(-6px); transition: opacity .18s cubic-bezier(.4,0,.2,1), transform .26s cubic-bezier(.4,0,.2,1), visibility 0s linear .26s; }
+/* The inner wrapper holds the 0fr sizing; it must have no padding/border so the
+   collapsed track can shrink to zero. The padded/bordered alert lives inside it. */
+.picker-alert-inner { min-height: 0; overflow: hidden; }
+.picker-alert { display: flex; visibility: hidden; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid color-mix(in srgb, var(--chakra-colors-accent) 40%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--chakra-colors-accent) 9%, var(--chakra-colors-bg-panel)); color: var(--chakra-colors-fg); font-size: 13px; opacity: 0; transform: translateY(-6px); transition: opacity .18s cubic-bezier(.4,0,.2,1), transform .26s cubic-bezier(.4,0,.2,1), visibility 0s linear .26s; }
 .picker-alert-region.is-visible .picker-alert { visibility: visible; opacity: 1; transform: none; transition: opacity .18s cubic-bezier(.4,0,.2,1), transform .26s cubic-bezier(.4,0,.2,1), visibility 0s; }
 .picker-alert svg { flex: 0 0 auto; width: 16px; height: 16px; color: var(--chakra-colors-accent); }
 .dark .picker-alert { background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-bg-panel)); }
@@ -45,7 +48,7 @@
 .picker-search svg { width: 20px; height: 20px; }
 .picker-search > svg { flex: 0 0 20px; }
 .picker-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--chakra-colors-fg); font: inherit; font-size: 16px; }
-.picker-search:has(input:focus-visible) { border-color: var(--chakra-colors-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent); }
+.picker-search:has(input:focus-visible) { border-color: var(--chakra-colors-accent); outline: 2px solid var(--chakra-colors-accent); outline-offset: 2px; }
 .picker-search input::placeholder { color: var(--chakra-colors-fg-subtle); }
 .picker-search input::-webkit-search-cancel-button { display: none; }
 .picker-search button { display: grid; place-items: center; border: 0; background: transparent; color: var(--chakra-colors-fg-muted); cursor: pointer; }
@@ -89,7 +92,7 @@
 .picker-slot-empty { font-size: 10px; }  .picker-slot .provider-mark,.picker-plus { flex-basis: 30px; width: 30px; height: 30px; }
   .picker-slot-copy strong { font-size: 11px; }
   .picker-slot-copy small { font-size: 9px; }
-  .picker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .picker-grid { grid-template-columns: 1fr; }
   .picker-model { min-height: 68px; gap: 10px; padding: 8px 62px 8px 8px; }
   .picker-skeleton { min-height: 68px; }
   .picker-model .provider-mark { flex-basis: 34px; width: 34px; height: 34px; }

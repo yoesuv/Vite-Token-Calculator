@@ -1,4 +1,4 @@
-import { useRef, useState, type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { DEFAULT_USAGE_MIX, type UsageMix } from "../../lib/pricing";
 import { Box, Button, HStack, Slider, Text } from "@chakra-ui/react";
 import "./UsageCompositionDialog.css";
@@ -37,28 +37,32 @@ export function UsageCompositionDialog({
   };
   // Local draft: nothing outside this dialog changes until Apply is pressed.
   const [mix, setMix] = useState<UsageMix>(initialMix);
-  // Redistribution basis: snapshot the untouched pair's ratio when an adjusted
-  // key's sequence begins and redistribute every event against it. Reusing one
-  // snapshot per key keeps the outcome independent of how many change events
-  // the pointer fires (0/71/29 in one jump vs 0/90/10 one point at a time from
-  // 65/25/10) and makes a round trip restore the starting mix exactly. The
-  // slider has no start event, so "sequence begins" = the adjusted key changed.
-  const basisRef = useRef<{ key: MixKey; basis: UsageMix } | null>(null);
+  // Tracks which slider is currently being adjusted. When the adjusted key
+  // changes, the next event handler snapshots the previous mix and uses that
+  // ratio as the basis for redistribution throughout the rest of the drag.
+  // Stored in state (not a ref) because it is read and written only in event
+  // handlers, never during render or inside a state updater.
+  const [activeKey, setActiveKey] = useState<MixKey | null>(null);
+  const [basis, setBasis] = useState<UsageMix | null>(null);
 
   const changeMix = (key: MixKey, value: number) => {
-    setMix((current) => {
-      const cached = basisRef.current;
-      // Same key as before: keep its snapshot. New key (or Reset cleared it):
-      // snapshot the current mix. Idempotent under StrictMode's double-invoked
-      // updaters — both passes see the same `current` and store the same basis.
-      const basis = cached?.key === key ? cached.basis : current;
-      if (cached?.key !== key) {
-        basisRef.current = { key, basis: current };
-      }
-      const remainingKeys = labels.map(({ key: itemKey }) => itemKey).filter((itemKey) => itemKey !== key);
-      const basisTotal = basis[remainingKeys[0]] + basis[remainingKeys[1]];
-      const targetRemaining = 100 - value;
+    // Snapshot the current ratio whenever the user starts adjusting a new key.
+    // This keeps the outcome independent of how many change events the pointer
+    // fires (0/71/29 in one jump vs 0/90/10 one point at a time from 65/25/10)
+    // and makes a round trip restore the starting mix exactly.
+    if (activeKey !== key) {
+      setActiveKey(key);
+      setBasis(mix);
+    }
 
+    const currentBasis = activeKey === key ? basis ?? mix : mix;
+    const remainingKeys = labels
+      .map(({ key: itemKey }) => itemKey)
+      .filter((itemKey) => itemKey !== key);
+    const basisTotal = currentBasis[remainingKeys[0]] + currentBasis[remainingKeys[1]];
+    const targetRemaining = 100 - value;
+
+    setMix((current) => {
       if (basisTotal === 0) {
         return {
           ...current,
@@ -68,7 +72,9 @@ export function UsageCompositionDialog({
         };
       }
 
-      const firstValue = Math.round(targetRemaining * basis[remainingKeys[0]] / basisTotal);
+      const firstValue = Math.round(
+        (targetRemaining * currentBasis[remainingKeys[0]]) / basisTotal,
+      );
       return {
         ...current,
         [key]: value,
@@ -152,7 +158,8 @@ export function UsageCompositionDialog({
               variant="plain"
               onClick={() => {
                 // Drop the stale basis so the next drag re-snapshots from the reset mix.
-                basisRef.current = null;
+                setActiveKey(null);
+                setBasis(null);
                 setMix(DEFAULT_MIX);
               }}
             >

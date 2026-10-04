@@ -36,7 +36,7 @@ const config = defineConfig({
           DEFAULT: { value: { _light: '#24231f', _dark: '#eceae4' } },
           heading: { value: { _light: '#272620', _dark: '#f2f0ea' } },
           muted: { value: { _light: '#77756f', _dark: '#a5a29a' } },
-          subtle: { value: { _light: '#8b8881', _dark: '#8b8881' } },
+          subtle: { value: { _light: '#6f6c65', _dark: '#918d86' } },
         },
         border: {
           DEFAULT: { value: { _light: '#e4e1da', _dark: '#34322d' } },
@@ -46,7 +46,12 @@ const config = defineConfig({
         accent: { value: { _light: '#D94F68', _dark: '#FF788D' } },
         // Form controls.
         'input-bg': { value: { _light: '#fafafa', _dark: '#1b1a18' } },
-        'focus-ring': { value: { _light: '#11111118', _dark: '#f2f0ea18' } },
+        // Focus rings are solid, high-chroma-adjacent grays: the token is the
+        // only focus indicator everywhere it is used, so it must clear WCAG
+        // 1.4.11's 3:1 non-text contrast (≥6.8:1 here) — an alpha-thinned
+        // ring (#11111118) composites to ~1.2:1 and is invisible to keyboard
+        // users.
+        'focus-ring': { value: { _light: '#595750', _dark: '#b5b2aa' } },
         // Neutral icon chip.
         'icon-bg': { value: { _light: '#f0f0f0', _dark: '#2d2b27' } },
         'icon-fg': { value: { _light: '#555555', _dark: '#b5b2aa' } },

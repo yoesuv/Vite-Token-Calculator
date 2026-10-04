@@ -16,7 +16,13 @@
         document.documentElement.classList.toggle('dark', theme === 'dark')
         document.documentElement.style.colorScheme = theme
       } catch {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        let dark = false
+        try {
+          dark = typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches
+        } catch {
+          // Keep the safe light default if preference detection fails.
+        }
         document.documentElement.classList.toggle('dark', dark)
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
       }

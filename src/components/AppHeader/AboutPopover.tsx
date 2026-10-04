@@ -31,7 +31,12 @@ export function AboutPopover() {
               <Popover.ArrowTip />
             </Popover.Arrow>
             <Popover.Body>
-              <strong className="about-pop-title">Token Calculator</strong>
+              {/* Titled via Popover.Title so the dialog has an accessible
+                  name (role="dialog" is unannounced without one). asChild
+                  keeps the styled <strong> as the rendered element. */}
+              <Popover.Title asChild>
+                <strong className="about-pop-title">Token Calculator</strong>
+              </Popover.Title>
               <p className="about-pop-text">
                 A pocket calculator for AI pricing: enter your budget in your
                 local currency and see how many tokens it buys across different

@@ -62,6 +62,30 @@ const isPositive = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0
 
 /**
+ * How far a live FX figure may sit from the registry fallback in either
+ * direction while still counting as that currency's rate. No real-world
+ * currency's units-per-USD has ever moved three orders of magnitude, so
+ * anything beyond that is a data error, not a rate.
+ */
+const RATE_TOLERANCE = 1_000
+
+/**
+ * A live FX figure the app can still compute with: the rate is positive AND
+ * within RATE_TOLERANCE of the registry fallback for its code.
+ *
+ * The window is the magnitude half of the same rule `isPositive` covers for
+ * sign: `1e-320` and `1e308` are strictly positive and finite, yet they floor
+ * every converted price to zero (a "free" rate that is not free) or overflow
+ * the coverage math to Infinity — silent garbage of the exact kind the strict
+ * checks were written to keep out, reached through size instead of value.
+ */
+export const isUsableRate = (code: Currency, value: unknown): value is number => {
+  if (!isPositive(value)) return false
+  const fallback = CURRENCIES[code].perUSD
+  return value >= fallback / RATE_TOLERANCE && value <= fallback * RATE_TOLERANCE
+}
+
+/**
  * Live USD rates published by the model catalog, keyed by supported currency.
  * A missing key means the catalog published nothing usable for that code, so
  * the registry default applies.
@@ -391,7 +415,9 @@ const RATES_STORAGE_KEY = 'exchangeRates'
  *
  * Unknown codes are dropped on read as well as on write: `Currency` is derived
  * from `CURRENCIES`, so a cached `EUR` would type as supported and then read
- * `CURRENCIES.EUR` as `undefined`.
+ * `CURRENCIES.EUR` as `undefined`. Rates outside the usable window are dropped
+ * too, so a table poisoned by an earlier malformed response heals itself on
+ * the next read instead of persisting the garbage (see isUsableRate).
  */
 export const readPersistedRates = (): ExchangeRates => {
   try {
@@ -401,7 +427,7 @@ export const readPersistedRates = (): ExchangeRates => {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return EMPTY_RATES
     const rates: ExchangeRates = {}
     for (const [code, value] of Object.entries(parsed)) {
-      if (isSupportedCurrency(code) && code !== 'USD' && isPositive(value)) rates[code] = value
+      if (isSupportedCurrency(code) && code !== 'USD' && isUsableRate(code, value)) rates[code] = value
     }
     return rates
   } catch {

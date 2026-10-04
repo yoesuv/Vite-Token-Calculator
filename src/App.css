@@ -163,7 +163,11 @@
 
 .prompt-input:focus {
   border-color: var(--chakra-colors-button-bg);
-  box-shadow: 0 0 0 2px var(--chakra-colors-focus-ring);
+  /* Outline, not a box-shadow ring: a 2px box-shadow is suppressed in
+     forced-colors mode, where the border color also maps to a system color —
+     together that left the textarea with no focus indicator at all. */
+  outline: 2px solid var(--chakra-colors-focus-ring);
+  outline-offset: 0;
 }
 
 .prompt-input::placeholder {
@@ -339,10 +343,19 @@
   .section-heading-row {
     display: block;
   }
-
   .estimate-label {
     margin-top: 7px;
     text-align: left;
+  }
+
+}
+
+/* Forced colors (Windows High Contrast): custom colors and box-shadows are
+   stripped, so every outline the app draws must land on the system Highlight —
+   one global rule beats repeating the media query in each stylesheet. */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
   }
 }
 

@@ -22,10 +22,12 @@
 .about-toggle:focus-visible {
   border-color: var(--chakra-colors-accent);
   color: var(--chakra-colors-accent);
-  outline: none;
 }
 
+/* Outline carries the indicator (see .picker-info for why). */
 .about-toggle:focus-visible {
+  outline: 2px solid var(--chakra-colors-accent);
+  outline-offset: 2px;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent);
 }
 
@@ -73,6 +75,7 @@
 
 .about-pop-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 10px;
   border-top: 1px solid var(--chakra-colors-border-subtle);
@@ -82,8 +85,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 28px;
-  padding: 0 11px;
+  min-height: 28px;
+  padding: 4px 11px;
   border: 1px solid var(--chakra-colors-border-subtle);
   border-radius: 999px;
   background: var(--chakra-colors-bg-panel);
@@ -98,7 +101,13 @@
 .about-pop-link:focus-visible {
   border-color: var(--chakra-colors-accent);
   color: var(--chakra-colors-accent);
-  outline: none;
+}
+
+/* Border/color alone map to system colors in forced-colors mode — the outline
+   is what still marks focus there. */
+.about-pop-link:focus-visible {
+  outline: 2px solid var(--chakra-colors-accent);
+  outline-offset: 2px;
 }
 
 .about-pop-link-icon {

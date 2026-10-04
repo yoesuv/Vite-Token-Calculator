@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
   type ReactNode,
@@ -13,6 +14,77 @@ import { describeError, fetchAiModels } from './models'
 import { MAX_SELECTED, sortForDisplay, toCatalogModels, type CatalogModel } from './modelCatalog'
 import { persistRates, readPersistedRates, type ExchangeRates } from './pricing'
 import { ModelSelectionContext, type ModelSelection, type SelectionStatus } from './useModelSelection'
+
+/** Slot-order selection plus the limit notice, mutated only through the reducer. */
+interface SelectionState {
+  /** Selected ids in slot order. Index 0 is the primary model. */
+  ids: string[]
+  /**
+   * Bumped on every blocked pick (0 = notice hidden). A counter rather than a
+   * boolean so each rejected click restarts the auto-dismiss timer.
+   */
+  alerts: number
+}
+
+type SelectionAction =
+  | { type: 'toggle'; id: string }
+  | { type: 'addFirstAvailable'; candidates: string[]; fallback: string[] }
+  | { type: 'remove'; id: string }
+  | { type: 'prune'; allowed: Set<string> }
+  | { type: 'fillDefault'; id: string }
+  | { type: 'hideNotice' }
+
+const EMPTY_SELECTION: SelectionState = { ids: [], alerts: 0 }
+
+/**
+ * Pure selection machine. Every branch decides against the latest state, so
+ * dispatches batched before a render compose instead of each reading a stale
+ * render closure. The alert counter lives inside the state purely, so a bump
+ * can never be double-applied by StrictMode's double invocation — and no side
+ * effect runs here: the provider's effect drives the auto-hide timer off `alerts`.
+ */
+function selectionReducer(
+  state: SelectionState,
+  action: SelectionAction,
+): SelectionState {
+  switch (action.type) {
+    case 'toggle':
+      if (state.ids.includes(action.id)) {
+        // Deselecting frees a slot, so the limit notice stands down.
+        return { ...state, ids: state.ids.filter((id) => id !== action.id), alerts: 0 }
+      }
+      if (state.ids.length >= MAX_SELECTED) {
+        // Rejected pick: surface the notice instead of silently ignoring it.
+        return { ...state, alerts: state.alerts + 1 }
+      }
+      return { ...state, ids: [...state.ids, action.id] }
+    case 'addFirstAvailable': {
+      if (state.ids.length >= MAX_SELECTED) {
+        return { ...state, alerts: state.alerts + 1 }
+      }
+      // Prefer the search-visible rows, then fall back to the whole catalog, so
+      // a click never re-picks a model that is already selected.
+      const firstFree = (ids: string[]) => ids.find((id) => !state.ids.includes(id))
+      const nextId = firstFree(action.candidates) ?? firstFree(action.fallback)
+      if (nextId === undefined) return state
+      return { ...state, ids: [...state.ids, nextId] }
+    }
+    case 'remove':
+      return { ...state, ids: state.ids.filter((id) => id !== action.id), alerts: 0 }
+    case 'prune':
+      // Drop selections the (re)loaded catalog no longer contains, so the
+      // limit check counts only models that are really compared.
+      return state.ids.every((id) => action.allowed.has(id))
+        ? state
+        : { ...state, ids: state.ids.filter((id) => action.allowed.has(id)) }
+    case 'fillDefault':
+      // First successful load pre-selects the primary; a selection already
+      // made by an earlier load wins over re-filling it.
+      return state.ids.length > 0 ? state : { ...state, ids: [action.id] }
+    case 'hideNotice':
+      return { ...state, alerts: 0 }
+  }
+}
 
 export function ModelSelectionProvider({ children }: { children: ReactNode }) {
   const [models, setModels] = useState<CatalogModel[]>([])
@@ -23,8 +95,10 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState('')
   // Bumped by the retry button to re-run the fetch effect.
   const [reloadKey, setReloadKey] = useState(0)
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [limitAlertKey, setLimitAlertKey] = useState(0)
+  const [{ ids: selectedIds, alerts: limitAlertKey }, dispatch] = useReducer(
+    selectionReducer,
+    EMPTY_SELECTION,
+  )
   // Set once a non-empty catalog has loaded, so "retry" after the user emptied
   // the selection does not resurrect a model they deliberately removed.
   const defaultedRef = useRef(false)
@@ -49,17 +123,13 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
         }
         // Drop selections the (re)loaded catalog no longer contains, so the
         // limit check counts only models that are really compared.
-        setSelectedIds((current) =>
-          current.every((id) => nextIds.has(id))
-            ? current
-            : current.filter((id) => nextIds.has(id)),
-        )
+        dispatch({ type: 'prune', allowed: nextIds })
         // First successful load pre-selects that model. The ref is written here,
-        // not inside the updater, which stays pure for React's double invocation
+        // not inside the reducer, which stays pure for React's double invocation
         // in StrictMode.
         if (!defaultedRef.current && primaryId) {
           defaultedRef.current = true
-          setSelectedIds((current) => (current.length > 0 ? current : [primaryId]))
+          dispatch({ type: 'fillDefault', id: primaryId })
         }
         setStatus('ready')
       })
@@ -76,55 +146,28 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
   // Auto-hide the limit notice shortly after the last blocked attempt.
   useEffect(() => {
     if (limitAlertKey === 0) return
-    const timer = window.setTimeout(() => setLimitAlertKey(0), 4000)
+    const timer = window.setTimeout(() => dispatch({ type: 'hideNotice' }), 4000)
     return () => window.clearTimeout(timer)
   }, [limitAlertKey])
 
   /** Remove a model and stand down the notice — a slot just freed up. */
   const deselect = useCallback((id: string) => {
-    setSelectedIds((current) => current.filter((item) => item !== id))
-    setLimitAlertKey(0)
+    dispatch({ type: 'remove', id })
   }, [])
 
-  const toggleModel = useCallback(
-    (id: string) => {
-      if (selectedIds.includes(id)) {
-        deselect(id)
-        return
-      }
-      if (selectedIds.length >= MAX_SELECTED) {
-        // Rejected pick: surface the notice instead of silently ignoring the click.
-        setLimitAlertKey((key) => key + 1)
-        return
-      }
-      setSelectedIds((current) =>
-        current.includes(id) || current.length >= MAX_SELECTED
-          ? current
-          : [...current, id],
-      )
-    },
-    [deselect, selectedIds],
-  )
+  const toggleModel = useCallback((id: string) => {
+    dispatch({ type: 'toggle', id })
+  }, [])
 
   const addFirstAvailable = useCallback(
     (candidates?: CatalogModel[]) => {
-      if (selectedIds.length >= MAX_SELECTED) {
-        setLimitAlertKey((key) => key + 1)
-        return
-      }
-      const isFree = (model: CatalogModel) => !selectedIds.includes(model.id)
-      // Prefer the search-visible rows, then fall back to the whole catalog, so
-      // a click never re-picks a model that is already selected.
-      const next = candidates?.find(isFree) ?? models.find(isFree)
-      if (!next) return
-      const id = next.id
-      setSelectedIds((current) =>
-        current.includes(id) || current.length >= MAX_SELECTED
-          ? current
-          : [...current, id],
-      )
+      dispatch({
+        type: 'addFirstAvailable',
+        candidates: (candidates ?? models).map((model) => model.id),
+        fallback: models.map((model) => model.id),
+      })
     },
-    [models, selectedIds],
+    [models],
   )
 
   const retry = useCallback(() => {

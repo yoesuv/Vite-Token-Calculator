@@ -2,7 +2,7 @@
 // derivation, and the display fields the UI derives from it. Kept free of
 // transport imports (Firebase is loaded by models.ts) so these rules can be
 // exercised on their own.
-import { isSupportedCurrency, type Currency, type ExchangeRates } from './pricing'
+import { isSupportedCurrency, isUsableRate, type Currency, type ExchangeRates } from './pricing'
 
 /** Firestore timestamp shape returned by the API (`released` and `cutoff`). */
 export type ApiTimestamp = { _seconds: number; _nanoseconds: number }
@@ -59,7 +59,9 @@ type RateEntry = [Currency, number]
  * read key by key, because that shape costs nothing to accept. A non-positive,
  * NaN, or infinite value is dropped — a `0` rate would silently turn every
  * converted price into free, which is the exact failure the coverage guard
- * spends its whole existence on.
+ * spends its whole existence on — and so is a wildly out-of-range one:
+ * `isUsableRate` keeps the figure within the currency's plausible magnitude
+ * (an absurd rate poisons prices and coverage just the same, then persists).
  */
 const ratesFromEntry = (entry: unknown): RateEntry[] => {
   const collected: RateEntry[] = []
@@ -69,7 +71,7 @@ const ratesFromEntry = (entry: unknown): RateEntry[] => {
     // so a stray `{ USD: 0.9 }` would rescale every other currency off a
     // non-1 base.
     if (!isSupportedCurrency(code) || code === 'USD') continue
-    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) continue
+    if (!isUsableRate(code, value)) continue
     collected.push([code, value])
   }
   return collected
@@ -103,6 +105,19 @@ export const exchangeRatesFromRows = (rows: readonly ApiModel[]): ExchangeRates 
 }
 
 /**
+ * A usable identity: non-blank, and when the API splits it as `provider/slug`,
+ * the slug past the slash must be non-blank too. A blank `name` sorts to row 0
+ * of the display order and would become a blank, still-selectable default
+ * primary; a `provider/` with no slug strips to an empty display name the same
+ * way.
+ */
+const isUsableName = (name: unknown): name is string => {
+  if (typeof name !== 'string' || name.trim().length === 0) return false
+  const separator = name.indexOf('/')
+  return separator <= 0 || name.slice(separator + 1).trim().length > 0
+}
+
+/**
  * Validate a raw response into a usable catalog.
  *
  * Identity first: a malformed row would crash the mapping, and duplicate ids
@@ -127,7 +142,7 @@ export const validateCatalogRows = (data: unknown): ApiModel[] => {
       !row ||
       typeof row.id !== 'string' ||
       !row.id.trim() ||
-      typeof row.name !== 'string' ||
+      !isUsableName(row.name) ||
       seen.has(row.id)
     ) {
       throw new Error('The models API returned an invalid catalog entry.')
@@ -169,12 +184,16 @@ export type CatalogModel = ApiModel & {
 /**
  * `moonshotai/kimi-k3` → provider `moonshotai`, display name `Kimi K3`, full name
  * kept for search and subtitles. `ApiModel.id` is an opaque document id, so
- * `fullName` — never `id` — is what the UI shows as the second line.
+ * `fullName` — never `id` — is what the UI shows as the second line. Stray
+ * slashes around the slug (`/kimi-k3/`) are API noise and stripped; the
+ * original name still reaches search through `fullName`.
  */
 export const toCatalogModel = (model: ApiModel): CatalogModel => {
   const separator = model.name.indexOf('/')
   const provider = separator > 0 ? model.name.slice(0, separator) : 'other'
-  const slug = separator > 0 ? model.name.slice(separator + 1) : model.name
+  const slug = (separator > 0 ? model.name.slice(separator + 1) : model.name)
+    .replace(/^\/+|\/+$/g, '')
+    .trim()
   return {
     ...model,
     displayName: slug

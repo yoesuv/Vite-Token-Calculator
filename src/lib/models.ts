@@ -10,6 +10,35 @@ import { validateCatalogRows, exchangeRatesFromRows, type Catalog } from './mode
 // Model-catalog endpoint, configured per environment (see .env.example).
 const AI_MODELS_URL = import.meta.env.VITE_AI_MODELS_URL
 
+/**
+ * Shared ceiling for both legs of a catalog load: App Check token acquisition
+ * and the catalog `GET` itself. A single value keeps the two from drifting and
+ * gives the retry UI one predictable wait, whichever stage stalls.
+ */
+const REQUEST_TIMEOUT_MS = 30_000
+
+/**
+ * Reject after `ms` unless `promise` settles first. Used to bound calls that
+ * have no native timeout (e.g. `getToken`); the caller still receives the
+ * original resolution if it wins the race.
+ *
+ * The losing promise is left running in the background — that is intentional
+ * here, because Firebase App Check deduplicates in-flight exchanges via
+ * `state.exchangeTokenPromise`, so a later retry awaits the same request
+ * rather than stacking another one.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms)
+    }),
+  ]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer)
+  })
+}
+
 /** Hosts the Firebase emulator can serve over plain `http` in dev. */
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
 
@@ -66,13 +95,22 @@ export async function fetchAiModels(): Promise<Catalog> {
   // value would otherwise send the App Check token to the wrong route or
   // unencrypted rather than failing with a clear message.
   const endpoint = resolveModelsEndpoint()
-  const { token } = await getToken(appCheck)
+  // App Check's token exchange has no built-in timeout: if the reCAPTCHA script
+  // stalls (blocked origin, DNS filtering, offline), `getToken` never settles
+  // and axios — which only runs *after* we have a token — cannot rescue the
+  // caller. Race it against the same ceiling so a hung exchange reaches the
+  // error/retry UI instead of pinning the provider in `loading` forever.
+  const { token } = await withTimeout(
+    getToken(appCheck),
+    REQUEST_TIMEOUT_MS,
+    'App verification timed out. Please try again.',
+  )
   // `unknown`, not ApiModel[]: nothing about the response is trusted until
   // validateCatalogRows has checked ids, names, and the price columns.
   const response = await axios.get<unknown>(endpoint, {
     headers: { 'X-Firebase-AppCheck': token },
     // Finite timeout so a stalled request reaches the error/retry UI.
-    timeout: 15000,
+    timeout: REQUEST_TIMEOUT_MS,
   })
   const models = validateCatalogRows(response.data)
   return { models, rates: exchangeRatesFromRows(models) }
