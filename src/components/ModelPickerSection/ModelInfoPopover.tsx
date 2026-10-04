@@ -22,7 +22,7 @@ const formatContext = (tokens: number): string =>
 const isDisplayableTimestamp = (
   ts: { _seconds: number } | null | undefined,
 ): ts is { _seconds: number } => {
-  if (ts == null || typeof ts._seconds !== "number" || !Number.isFinite(ts._seconds)) {
+  if (ts === null || ts === undefined || typeof ts._seconds !== "number" || !Number.isFinite(ts._seconds)) {
     return false;
   }
   return Number.isFinite(new Date(ts._seconds * 1000).getTime());

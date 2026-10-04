@@ -10,9 +10,9 @@ import "./ModelPickerSection.css";
 
 /**
  * Copy for the slots-full notice; shared by the banner and its hidden live
- * region. Prose version of MAX_SELECTED — update both together.
+ * region. Derived from MAX_SELECTED so it stays in sync with the slot count.
  */
-const LIMIT_NOTICE = "Five models selected. Remove one to compare another.";
+const LIMIT_NOTICE = `${MAX_SELECTED} models selected. Remove one to compare another.`;
 
 /**
  * Model catalog browser. Selection state lives in <ModelSelectionProvider> so

@@ -1,6 +1,14 @@
-import { useState, type RefObject } from "react";
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  Dialog,
+  HStack,
+  Portal,
+  Slider,
+  Text,
+} from "@chakra-ui/react";
 import { DEFAULT_USAGE_MIX, type UsageMix } from "../../lib/pricing";
-import { Box, Button, HStack, Slider, Text } from "@chakra-ui/react";
 import "./UsageCompositionDialog.css";
 
 type UsageCompositionDialogProps = {
@@ -8,8 +16,6 @@ type UsageCompositionDialogProps = {
   initialMix: UsageMix;
   onApply: (mix: UsageMix) => void;
   onClose: () => void;
-  /** The trigger button; focus returns here once the dialog unmounts. */
-  triggerRef?: RefObject<HTMLElement | null>;
 };
 
 const DEFAULT_MIX: UsageMix = DEFAULT_USAGE_MIX;
@@ -27,14 +33,7 @@ export function UsageCompositionDialog({
   initialMix,
   onApply,
   onClose,
-  triggerRef,
 }: UsageCompositionDialogProps) {
-  // Every exit path funnels through here: the dialog unmounts on close, so focus
-  // is handed back to the trigger in the same tick the parent flips its state.
-  const close = () => {
-    onClose();
-    triggerRef?.current?.focus();
-  };
   // Local draft: nothing outside this dialog changes until Apply is pressed.
   const [mix, setMix] = useState<UsageMix>(initialMix);
   // Tracks which slider is currently being adjusted. When the adjusted key
@@ -85,101 +84,105 @@ export function UsageCompositionDialog({
   };
 
   return (
-    <Box
-      className="usage-dialog-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close();
+    <Dialog.Root
+      open
+      onOpenChange={({ open }) => {
+        if (!open) onClose();
       }}
     >
-      <Box
-        as="section"
-        className="usage-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="usage-dialog-title"
-        aria-describedby="usage-dialog-description"
-      >
-        <Box className="usage-dialog-header">
-          <Box>
-            <Text id="usage-dialog-title" className="usage-dialog-title">
-              Usage composition
-            </Text>
-            <Text id="usage-dialog-description" className="usage-dialog-description">
-              Adjust the proportion of tokens in one request.
-            </Text>
-          </Box>
-          <button
-            className="usage-dialog-close"
-            aria-label="Close usage composition dialog"
-            onClick={close}
-          >
-            <span aria-hidden="true">×</span>
-          </button>
-        </Box>
-        <Box className="usage-slider-list">
-          {labels.map(({ key, label }) => (
-            <Box className="usage-slider-row" key={key}>
-              <HStack className="usage-slider-heading" justify="space-between">
-                <Text>{label}</Text>
-                <strong>{mix[key]}%</strong>
-              </HStack>
-        <Slider.Root
-                className="usage-slider"
-                min={0}
-                max={100}
-                value={[mix[key]]}
-                onValueChange={({ value }) => changeMix(key, value[0] ?? 0)}
-                aria-label={[`${label} percentage`]}
-              >
-                <Slider.Control>
-                  <Slider.Track>
-                    <Slider.Range />
-                  </Slider.Track>
-                  <Slider.Thumb index={0} />
-                </Slider.Control>
-              </Slider.Root>
-            </Box>
-          ))}
-        </Box>
-        {/* Two deliberate note lines (Default / total rule) beside an action
-            pair that drops below them when the row runs out of room. The basis
-            is wide enough to keep the first line unbroken on every width where
-            the buttons still share the row. */}
-        <Box className="usage-dialog-footer">
-          <Box className="usage-footer-notes">
-            <Text>
-              Default: {DEFAULT_USAGE_MIX.cache}% cache, {DEFAULT_USAGE_MIX.input}% input, {DEFAULT_USAGE_MIX.output}% output.
-            </Text>
-            <Text>Total always equals 100%.</Text>
-          </Box>
-          <HStack className="usage-dialog-actions" gap="8px">
-            <Button
-              className="usage-reset"
-              variant="plain"
-              onClick={() => {
-                // Drop the stale basis so the next drag re-snapshots from the reset mix.
-                setActiveKey(null);
-                setBasis(null);
-                setMix(DEFAULT_MIX);
-              }}
-            >
-              Reset
-            </Button>
-            <Button
-              className="usage-apply"
-              variant="plain"
-              disabled={sameMix(mix, initialMix)}
-              onClick={() => {
-                onApply(mix);
-                close();
-              }}
-            >
-              Apply
-            </Button>
-          </HStack>
-        </Box>
-      </Box>
-    </Box>
+      <Portal>
+        <Dialog.Backdrop className="usage-dialog-backdrop" />
+        <Dialog.Positioner>
+          <Dialog.Content className="usage-dialog" maxWidth="720px" width="100%" asChild>
+            <section>
+              <Dialog.Header className="usage-dialog-header">
+                <Box>
+                  <Dialog.Title className="usage-dialog-title">
+                    Usage composition
+                  </Dialog.Title>
+                  <Dialog.Description className="usage-dialog-description">
+                    Adjust the proportion of tokens in one request.
+                  </Dialog.Description>
+                </Box>
+                <Dialog.CloseTrigger
+                  className="usage-dialog-close"
+                  aria-label="Close usage composition dialog"
+                  asChild
+                >
+                  <button type="button">
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </Dialog.CloseTrigger>
+              </Dialog.Header>
+              <Dialog.Body className="usage-slider-list">
+                {labels.map(({ key, label }) => (
+                  <Box className="usage-slider-row" key={key}>
+                    <HStack className="usage-slider-heading" justify="space-between">
+                      <Text>{label}</Text>
+                      <strong>{mix[key]}%</strong>
+                    </HStack>
+                    <Slider.Root
+                      className="usage-slider"
+                      min={0}
+                      max={100}
+                      value={[mix[key]]}
+                      onValueChange={({ value }) => changeMix(key, value[0] ?? 0)}
+                      aria-label={[`${label} percentage`]}
+                    >
+                      <Slider.Control>
+                        <Slider.Track>
+                          <Slider.Range />
+                        </Slider.Track>
+                        <Slider.Thumb index={0} />
+                      </Slider.Control>
+                    </Slider.Root>
+                  </Box>
+                ))}
+              </Dialog.Body>
+              {/* Two deliberate note lines (Default / total rule) beside an action
+                  pair that drops below them when the row runs out of room. The basis
+                  is wide enough to keep the first line unbroken on every width where
+                  the buttons still share the row. */}
+              <Dialog.Footer className="usage-dialog-footer" asChild>
+                <footer>
+                  <Box className="usage-footer-notes">
+                    <Text>
+                      Default: {DEFAULT_USAGE_MIX.cache}% cache, {DEFAULT_USAGE_MIX.input}% input, {DEFAULT_USAGE_MIX.output}% output.
+                    </Text>
+                    <Text>Total always equals 100%.</Text>
+                  </Box>
+                  <HStack className="usage-dialog-actions" gap="8px">
+                    <Button
+                      className="usage-reset"
+                      variant="plain"
+                      onClick={() => {
+                        // Drop the stale basis so the next drag re-snapshots from the reset mix.
+                        setActiveKey(null);
+                        setBasis(null);
+                        setMix(DEFAULT_MIX);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      className="usage-apply"
+                      variant="plain"
+                      disabled={sameMix(mix, initialMix)}
+                      onClick={() => {
+                        onApply(mix);
+                        onClose();
+                      }}
+                    >
+                      Apply
+                    </Button>
+                  </HStack>
+                </footer>
+              </Dialog.Footer>
+            </section>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   );
 }
 

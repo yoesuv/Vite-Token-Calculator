@@ -24,6 +24,12 @@ interface SelectionState {
    * boolean so each rejected click restarts the auto-dismiss timer.
    */
   alerts: number
+  /**
+   * Ids present in the currently loaded catalog. Used to reject stray ids
+   * (e.g. stale URL params or hand-typed values) that would otherwise be
+   * invisible in `selectedModels` yet still consume a MAX_SELECTED slot.
+   */
+  _catalogIds: Set<string>
 }
 
 type SelectionAction =
@@ -34,7 +40,7 @@ type SelectionAction =
   | { type: 'fillDefault'; id: string }
   | { type: 'hideNotice' }
 
-const EMPTY_SELECTION: SelectionState = { ids: [], alerts: 0 }
+const EMPTY_SELECTION: SelectionState = { ids: [], alerts: 0, _catalogIds: new Set<string>() }
 
 /**
  * Pure selection machine. Every branch decides against the latest state, so
@@ -48,16 +54,22 @@ function selectionReducer(
   action: SelectionAction,
 ): SelectionState {
   switch (action.type) {
-    case 'toggle':
+    case 'toggle': {
       if (state.ids.includes(action.id)) {
         // Deselecting frees a slot, so the limit notice stands down.
         return { ...state, ids: state.ids.filter((id) => id !== action.id), alerts: 0 }
+      }
+      // Ignore ids that are not in the current catalog — they would be
+      // invisible in `selectedModels` but still consume a MAX_SELECTED slot.
+      if (!state._catalogIds.has(action.id)) {
+        return state
       }
       if (state.ids.length >= MAX_SELECTED) {
         // Rejected pick: surface the notice instead of silently ignoring it.
         return { ...state, alerts: state.alerts + 1 }
       }
       return { ...state, ids: [...state.ids, action.id] }
+    }
     case 'addFirstAvailable': {
       if (state.ids.length >= MAX_SELECTED) {
         return { ...state, alerts: state.alerts + 1 }
@@ -74,9 +86,13 @@ function selectionReducer(
     case 'prune':
       // Drop selections the (re)loaded catalog no longer contains, so the
       // limit check counts only models that are really compared.
-      return state.ids.every((id) => action.allowed.has(id))
-        ? state
-        : { ...state, ids: state.ids.filter((id) => action.allowed.has(id)) }
+      return {
+        ...state,
+        ids: state.ids.every((id) => action.allowed.has(id))
+          ? state.ids
+          : state.ids.filter((id) => action.allowed.has(id)),
+        _catalogIds: action.allowed,
+      }
     case 'fillDefault':
       // First successful load pre-selects the primary; a selection already
       // made by an earlier load wins over re-filling it.

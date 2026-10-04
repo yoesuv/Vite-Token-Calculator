@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -56,8 +56,6 @@ export function ModelBalanceSection({
   } = useModelSelection();
   const [usageOpen, setUsageOpen] = useState(false);
   const [usageMix, setUsageMix] = useState<UsageMix>(DEFAULT_USAGE_MIX);
-  // The dialog restores focus here when it closes; see UsageCompositionDialog.
-  const usageTriggerRef = useRef<HTMLButtonElement | null>(null);
   // While editing, show raw digits so the cursor behaves; format with separators only when blurred.
   const [balanceFocused, setBalanceFocused] = useState(false);
   // `Number(balance) || 0` would hand `Infinity` straight to the coverage math for
@@ -150,7 +148,6 @@ export function ModelBalanceSection({
         </Box>
         <Box className="usage-area">
           <Button
-            ref={usageTriggerRef}
             className="usage-button"
             onClick={() => setUsageOpen(true)}
             aria-haspopup="dialog"
@@ -167,7 +164,6 @@ export function ModelBalanceSection({
               initialMix={usageMix}
               onApply={setUsageMix}
               onClose={() => setUsageOpen(false)}
-              triggerRef={usageTriggerRef}
             />
           )}
         </Box>

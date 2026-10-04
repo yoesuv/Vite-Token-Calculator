@@ -45,7 +45,7 @@
 
 /* About popover panel: same panel look as .picker-pop. */
 .about-pop {
-  width: 380px;
+  width: 418px;
   max-width: calc(100vw - 32px);
 }
 

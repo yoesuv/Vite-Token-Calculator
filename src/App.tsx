@@ -11,10 +11,28 @@ import {
   defaultBalanceFor,
   makeFx,
   type Currency,
+  type ExchangeRates,
+  type Fx,
 } from './lib/pricing'
 import { system } from './theme'
 import { useColorMode } from './lib/useColorMode'
 import './App.css'
+
+/**
+ * Resolved display balance. `null` means the untouched placeholder (≈ USD 1 at
+ * the active rate); a typed value is held in the currency it was entered in and
+ * only converted for display, so the stored amount never accumulates rounding.
+ */
+const balanceFor = (
+  balanceInput: { amount: string; currency: Currency } | null,
+  currency: Currency,
+  rates: ExchangeRates,
+  fx: Fx,
+): string => {
+  if (balanceInput === null) return defaultBalanceFor(fx)
+  if (balanceInput.currency === currency) return balanceInput.amount
+  return convertBalance(balanceInput.amount, makeFx(balanceInput.currency, rates), fx)
+}
 
 function getInitialCurrency(): Currency {
   try {
@@ -94,12 +112,7 @@ function Workspace({
   // A typed value is held in the currency it was entered in and only converted
   // (rounded to the active display precision) for this render — the stored amount
   // itself never changes, so IDR → USD → IDR returns to the original.
-  const balance =
-    balanceInput === null
-      ? defaultBalanceFor(fx)
-      : balanceInput.currency === currency
-        ? balanceInput.amount
-        : convertBalance(balanceInput.amount, makeFx(balanceInput.currency, rates), fx)
+  const balance = balanceFor(balanceInput, currency, rates, fx)
 
   const handleBalanceChange = useCallback(
     (next: string) => {

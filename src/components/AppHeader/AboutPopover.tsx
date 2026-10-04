@@ -1,6 +1,8 @@
 import { Portal, Popover } from "@chakra-ui/react";
 import { LuGithub } from "react-icons/lu";
 import { FaXTwitter } from "react-icons/fa6";
+import { SiBuymeacoffee } from "react-icons/si";
+import { projectLinks } from "../../config/projectLinks";
 import { InfoIcon } from "../icons";
 import "./AboutPopover.css";
 
@@ -45,11 +47,17 @@ export function AboutPopover() {
                 estimate matches how you actually use each model. Everything
                 runs in your browser; no account required.
               </p>
+              <p className="about-pop-text">
+                The data is collected manually from various sources and may be
+                inaccurate or out of date. Please verify any pricing information
+                with the official model provider before making decisions based
+                on it.
+              </p>
               <p className="about-pop-version">Version {__APP_VERSION__}</p>
               <div className="about-pop-links">
                 <a
                   className="about-pop-link"
-                  href="https://github.com/your-org/token-calculator"
+                  href={projectLinks.github}
                   target="_blank"
                   rel="noreferrer noopener"
                 >
@@ -60,7 +68,7 @@ export function AboutPopover() {
                 </a>
                 <a
                   className="about-pop-link"
-                  href="https://x.com/yoesuv"
+                  href={projectLinks.x}
                   target="_blank"
                   rel="noreferrer noopener"
                 >
@@ -68,6 +76,17 @@ export function AboutPopover() {
                     <FaXTwitter />
                   </span>
                   X (Twitter)
+                </a>
+                <a
+                  className="about-pop-link"
+                  href={projectLinks.buyMeACoffee}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <span className="about-pop-link-icon" aria-hidden="true">
+                    <SiBuymeacoffee />
+                  </span>
+                  Buy me a coffee
                 </a>
               </div>
             </Popover.Body>

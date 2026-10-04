@@ -8,6 +8,13 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist']),
   {
+    files: ['**/*.{js,mjs,cjs}'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
@@ -17,6 +24,14 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+    rules: {
+      eqeqeq: ['error', 'always'],
+      'no-nested-ternary': 'error',
+      'no-eval': 'error',
+      'no-new-func': 'error',
+      'no-implied-eval': 'error',
+      'no-extend-native': 'error',
     },
   },
 ])
