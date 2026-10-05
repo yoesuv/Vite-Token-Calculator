@@ -108,6 +108,8 @@ export async function fetchAiModels(): Promise<Catalog> {
   // `unknown`, not ApiModel[]: nothing about the response is trusted until
   // validateCatalogRows has checked ids, names, and the price columns.
   const response = await axios.get<unknown>(endpoint, {
+    adapter: 'fetch',
+    fetchOptions: { redirect: 'error' },
     headers: { 'X-Firebase-AppCheck': token },
     // Finite timeout so a stalled request reaches the error/retry UI.
     timeout: REQUEST_TIMEOUT_MS,

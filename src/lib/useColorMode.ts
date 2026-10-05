@@ -12,7 +12,15 @@ function getInitialColorMode(): ColorMode {
   } catch {
     // Storage may be unavailable in private browsing or restricted environments.
   }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  try {
+    return typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  } catch {
+    return 'light'
+  }
 }
 
 /**

@@ -70,7 +70,8 @@
   font-size: 11.5px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .about-pop-links {
@@ -100,7 +101,7 @@
 .about-pop-link:hover,
 .about-pop-link:focus-visible {
   border-color: var(--chakra-colors-accent);
-  color: var(--chakra-colors-accent);
+  color: var(--chakra-colors-fg-muted);
 }
 
 /* Border/color alone map to system colors in forced-colors mode — the outline

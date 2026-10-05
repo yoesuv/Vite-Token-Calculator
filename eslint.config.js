@@ -10,6 +10,15 @@ export default defineConfig([
   {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [js.configs.recommended],
+    rules: {
+      'no-var': 'error',
+      eqeqeq: ['error', 'always'],
+      'no-nested-ternary': 'error',
+      'no-eval': 'error',
+      'no-new-func': 'error',
+      'no-implied-eval': 'error',
+      'no-extend-native': 'error',
+    },
     languageOptions: {
       globals: globals.node,
     },

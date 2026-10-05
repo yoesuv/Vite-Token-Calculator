@@ -35,7 +35,7 @@ const config = defineConfig({
         fg: {
           DEFAULT: { value: { _light: '#24231f', _dark: '#eceae4' } },
           heading: { value: { _light: '#272620', _dark: '#f2f0ea' } },
-          muted: { value: { _light: '#77756f', _dark: '#a5a29a' } },
+          muted: { value: { _light: '#706e68', _dark: '#a5a29a' } },
           subtle: { value: { _light: '#6f6c65', _dark: '#918d86' } },
         },
         border: {
@@ -43,7 +43,7 @@ const config = defineConfig({
           subtle: { value: { _light: '#d5d5d5', _dark: '#3d3b35' } },
         },
         // Brand accent — shared by both modes.
-        accent: { value: { _light: '#D94F68', _dark: '#FF788D' } },
+        accent: { value: { _light: '#BF3652', _dark: '#FF788D' } },
         // Form controls.
         'input-bg': { value: { _light: '#fafafa', _dark: '#1b1a18' } },
         // Focus rings are solid, high-chroma-adjacent grays: the token is the

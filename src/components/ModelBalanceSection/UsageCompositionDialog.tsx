@@ -127,6 +127,10 @@ export function UsageCompositionDialog({
                       max={100}
                       value={[mix[key]]}
                       onValueChange={({ value }) => changeMix(key, value[0] ?? 0)}
+                      onValueChangeEnd={() => {
+                        setActiveKey(null);
+                        setBasis(null);
+                      }}
                       aria-label={[`${label} percentage`]}
                     >
                       <Slider.Control>

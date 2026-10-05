@@ -112,9 +112,13 @@ export const exchangeRatesFromRows = (rows: readonly ApiModel[]): ExchangeRates 
  * way.
  */
 const isUsableName = (name: unknown): name is string => {
-  if (typeof name !== 'string' || name.trim().length === 0) return false
+  if (typeof name !== 'string') return false
   const separator = name.indexOf('/')
-  return separator <= 0 || name.slice(separator + 1).trim().length > 0
+  const slug = (separator > 0 ? name.slice(separator + 1) : name)
+    .replace(/^\/+|\/+$/g, '')
+    .trim()
+    .replace(/[-_]+/g, ' ')
+  return slug.trim().length > 0
 }
 
 /**

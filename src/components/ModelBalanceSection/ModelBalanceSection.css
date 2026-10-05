@@ -99,7 +99,7 @@
    this single child still stretches across the full header width. Centered text
    would otherwise run underneath the 30px button on narrow screens, so reserve
    room on both sides to keep the title clear and optically centered. */
-.usage-dialog-header > div { flex: 1; min-width: 0; padding-inline: 38px; }
+.usage-dialog-header > div { flex: 1; min-width: 0; padding-inline: 38px; overflow-wrap: anywhere; }
 .usage-dialog-close { position: absolute; top: 0; right: 0; }
 .usage-dialog-title { margin: 0; font-family: var(--chakra-fonts-heading); font-size: 25px; font-weight: 650; letter-spacing: -0.5px; line-height: 1.3; }
 .usage-dialog-description { margin-top: 7px; color: var(--chakra-colors-fg-muted); font-size: 14px; line-height: 1.5; }
@@ -170,7 +170,7 @@
 .coverage-panel { margin-top: 16px; padding: 13px 15px; border-radius: 3px; background: var(--chakra-colors-bg-muted); }
 .coverage-label,
 .coverage-note { color: var(--chakra-colors-fg-muted); font-size: 12px; }
-.coverage-value { margin: 0; color: var(--chakra-colors-accent); font-family: var(--chakra-fonts-heading); font-size: 30px; font-weight: 500; line-height: 1.25; white-space: nowrap; }
+.coverage-value { margin: 0; color: var(--chakra-colors-accent); font-family: var(--chakra-fonts-heading); font-size: 30px; font-weight: 500; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
 /* The suffix rides at two-thirds scale so "66.67M" never reads as six headline
    digits; it inherits the accent color and heading font from the value. */
 .coverage-unit { margin-left: 1px; font-size: 17px; }

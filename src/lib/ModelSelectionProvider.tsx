@@ -76,7 +76,8 @@ function selectionReducer(
       }
       // Prefer the search-visible rows, then fall back to the whole catalog, so
       // a click never re-picks a model that is already selected.
-      const firstFree = (ids: string[]) => ids.find((id) => !state.ids.includes(id))
+      const firstFree = (ids: string[]) =>
+        ids.find((id) => state._catalogIds.has(id) && !state.ids.includes(id))
       const nextId = firstFree(action.candidates) ?? firstFree(action.fallback)
       if (nextId === undefined) return state
       return { ...state, ids: [...state.ids, nextId] }

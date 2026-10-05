@@ -66,7 +66,7 @@ if (isFirebaseConfigured && import.meta.env.DEV) {
 export const appCheck: AppCheck | null = isFirebaseConfigured
   ? initializeAppCheck(app, {
       provider: new ReCaptchaEnterpriseProvider(
-        import.meta.env.VITE_RECAPTCHA_ENTERPRISE_KEY,
+        import.meta.env.VITE_RECAPTCHA_ENTERPRISE_KEY.trim(),
       ),
       // Automatically refresh the App Check token before it expires.
       isTokenAutoRefreshEnabled: true,

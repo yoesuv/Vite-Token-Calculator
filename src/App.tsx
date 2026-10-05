@@ -6,6 +6,7 @@ import { ModelPickerSection } from './components/ModelPickerSection/ModelPickerS
 import { ModelSelectionProvider } from './lib/ModelSelectionProvider'
 import { useModelSelection } from './lib/useModelSelection'
 import {
+  convertAmount,
   convertBalance,
   CURRENCY_LIST,
   defaultBalanceFor,
@@ -110,9 +111,14 @@ function Workspace({
   // Derived: the placeholder means "≈ USD 1" at whatever rate is active, so it
   // reads 15000 while the catalog says 15000 and 17920 until it says anything.
   // A typed value is held in the currency it was entered in and only converted
-  // (rounded to the active display precision) for this render — the stored amount
+  // (unrounded, for calculation precision) for this render — the stored amount
   // itself never changes, so IDR → USD → IDR returns to the original.
   const balance = balanceFor(balanceInput, currency, rates, fx)
+  const convertedBalance = balanceInput === null
+    ? Number(balance)
+    : balanceInput.currency === currency
+      ? Number(balanceInput.amount)
+      : convertAmount(Number(balanceInput.amount), balanceInput.currency, currency, rates)
 
   const handleBalanceChange = useCallback(
     (next: string) => {
@@ -140,7 +146,7 @@ function Workspace({
         onCurrencyChange={switchCurrency}
       />
       <Box as="main" className="page-shell">
-        <ModelBalanceSection fx={fx} balance={balance} onBalanceChange={handleBalanceChange} />
+        <ModelBalanceSection fx={fx} balance={convertedBalance} onBalanceChange={handleBalanceChange} />
         <ModelPickerSection fx={fx} />
       </Box>
     </>

@@ -26,7 +26,8 @@ import "./ModelBalanceSection.css";
 type ModelBalanceSectionProps = {
   /** Active currency + catalog FX rate, resolved once by <Workspace>. */
   fx: Fx;
-  balance: string;
+  /** Unrounded balance in the active currency, used for coverage calculations. */
+  balance: number;
   onBalanceChange: (balance: string) => void;
 };
 
@@ -58,18 +59,14 @@ export function ModelBalanceSection({
   const [usageMix, setUsageMix] = useState<UsageMix>(DEFAULT_USAGE_MIX);
   // While editing, show raw digits so the cursor behaves; format with separators only when blurred.
   const [balanceFocused, setBalanceFocused] = useState(false);
-  // `Number(balance) || 0` would hand `Infinity` straight to the coverage math for
-  // an absurd paste (or a currency switch that scales up), and `formatTokenCount`
-  // renders `InfinityT` in every slot. Same `maxSafeBalance` ceiling the input
-  // sanitizer enforces, so the two never disagree about a usable amount.
-  const parsedBalance = Number(balance);
-  const numericBalance =
-    Number.isFinite(parsedBalance) &&
-    parsedBalance >= 0 &&
-    parsedBalance <= maxSafeBalance(fx.currency)
-      ? parsedBalance
-      : 0;
   const config = currencyConfig(fx.currency);
+
+  // Sanitizing onChange does not cover currency-derived balances: a valid USD
+  // amount can convert to an IDR value above MAX_SAFE_INTEGER, where `Number`
+  // loses integer precision. Cap the calculation balance to the currency's safe
+  // ceiling and warn the user rather than silently producing wrong coverage.
+  const balanceOutOfRange = balance > maxSafeBalance(fx.currency);
+  const calculationBalance = balanceOutOfRange ? maxSafeBalance(fx.currency) : balance;
 
   return (
     <Box
@@ -128,8 +125,8 @@ export function ModelBalanceSection({
                   inputMode={config.inputMode}
                   value={
                     balanceFocused
-                      ? balance
-                      : formatBalanceForDisplay(balance, fx.currency)
+                      ? String(balance)
+                      : formatBalanceForDisplay(String(balance), fx.currency)
                   }
                   onFocus={() => setBalanceFocused(true)}
                   onBlur={() => setBalanceFocused(false)}
@@ -145,6 +142,13 @@ export function ModelBalanceSection({
           <Text className="balance-help">
             Adjust this amount to compare model costs against your balance.
           </Text>
+          {balanceOutOfRange && (
+            <Text className="balance-warning" role="alert">
+              This amount exceeds the safe limit for {config.displayName} and may
+              produce inaccurate estimates. Enter a smaller amount or switch to a
+              currency with higher precision.
+            </Text>
+          )}
         </Box>
         <Box className="usage-area">
           <Button
@@ -212,7 +216,7 @@ export function ModelBalanceSection({
               key={slot}
               slot={slot}
               model={selectedModels[slot]}
-              balance={numericBalance}
+              balance={calculationBalance}
               fx={fx}
               usageMix={usageMix}
               onAdd={addFirstAvailable}
