@@ -117,7 +117,7 @@ export const makeFx = (currency: Currency, rates: ExchangeRates = EMPTY_RATES): 
 export const ratePerUSD = (fx: Fx, currency: Currency = fx.currency): number => {
   if (currency === 'USD') return CURRENCIES.USD.perUSD
   const live = fx.rates[currency]
-  return isPositive(live) ? live : CURRENCIES[currency].perUSD
+  return isUsableRate(currency, live) ? live : CURRENCIES[currency].perUSD
 }
 
 /**
@@ -156,22 +156,45 @@ export type UsageMix = { cache: number; input: number; output: number }
  */
 export const DEFAULT_USAGE_MIX: UsageMix = { cache: 65, input: 25, output: 10 }
 
+/** A mix is usable when every share is a finite non-negative number and the total is positive. */
+const isValidUsageMix = (mix: UsageMix): boolean => {
+  const { cache, input, output } = mix
+  return (
+    Number.isFinite(cache) && cache >= 0 &&
+    Number.isFinite(input) && input >= 0 &&
+    Number.isFinite(output) && output >= 0 &&
+    cache + input + output > 0
+  )
+}
+
 /** Shown when the API publishes no rate for a column, so "unknown" never reads as "free". */
 const PRICE_UNAVAILABLE = '—'
 
 /**
  * US cents per 1M tokens → dollars per 1M (the API's unit; `100` means USD 1).
- * Guarded against missing/zero/negative API values — returns 0 as a safe fallback.
+ * Used for optional prices (cache reads): missing/zero/negative values fall back
+ * to `0`, which means "free" by catalog policy.
  */
-const centsToUSD = (cents: number | null | undefined): number =>
+const optionalCentsToUSD = (cents: number | null | undefined): number =>
   isPositive(cents) ? cents / 100 : 0
+
+/**
+ * Same unit conversion for required prices (input/output). A published `0` is a
+ * genuine free rate and returns `0`; a missing, `NaN`, infinite, or negative
+ * value means the price is unavailable and returns `NaN` so callers can tell
+ * "unknown" apart from "free".
+ */
+const requiredCentsToUSD = (cents: number | null | undefined): number =>
+  typeof cents === 'number' && Number.isFinite(cents) && cents >= 0 ? cents / 100 : Number.NaN
 
 /**
  * Price per 1M tokens in USD for the requested kind. The catalog's unit is US
  * cents (`output: 1000` → USD 10 per 1M), so this is the published rate as-is.
+ * Cache is optional and reads as `0` when absent; input/output are required and
+ * read as `NaN` when absent or invalid.
  */
 export const pricePerMillionUSD = (model: PricedModel, kind: PriceKind): number =>
-  centsToUSD(model[kind])
+  kind === 'cache' ? optionalCentsToUSD(model.cache) : requiredCentsToUSD(model[kind])
 
 /**
  * Price per 1M tokens in the active currency. The catalog publishes prices in
@@ -196,13 +219,22 @@ export const pricePerMillion = (model: PricedModel, kind: PriceKind, fx: Fx): nu
  * cache reads, exactly as the catalog numbers it, not an input-rate fallback.
  */
 export const blendedPricePerMillionUSD = (model: PricedModel, mix: UsageMix): number => {
+  if (!isValidUsageMix(mix)) return 0
   const total = mix.cache + mix.input + mix.output
-  if (total <= 0) return 0
-  return (
-    mix.cache * pricePerMillionUSD(model, 'cache') +
-    mix.input * pricePerMillionUSD(model, 'input') +
-    mix.output * pricePerMillionUSD(model, 'output')
-  ) / total
+  const cachePrice = optionalCentsToUSD(model.cache)
+  const inputPrice = requiredCentsToUSD(model.input)
+  const outputPrice = requiredCentsToUSD(model.output)
+  let weighted = 0
+  if (mix.cache > 0) weighted += mix.cache * cachePrice
+  if (mix.input > 0) {
+    if (Number.isNaN(inputPrice)) return Number.NaN
+    weighted += mix.input * inputPrice
+  }
+  if (mix.output > 0) {
+    if (Number.isNaN(outputPrice)) return Number.NaN
+    weighted += mix.output * outputPrice
+  }
+  return weighted / total
 }
 
 /** Convert an amount between supported currencies at one rate table. */
@@ -227,9 +259,14 @@ export const coverageTokens = (
   mix: UsageMix,
 ): number => {
   const price = blendedPricePerMillionUSD(model, mix)
-  if (price <= 0) return 0
+  // A non-positive (or NaN) blend means the mix is empty, every weighted rate
+  // is free, or a required rate is unavailable. In all of those cases the
+  // coverage figure is either not applicable or already handled by
+  // isUnlimitedCoverage, so return 0 rather than letting NaN/Infinity escape.
+  if (!(price > 0) || !Number.isFinite(balance) || balance < 0) return 0
   const balanceUSD = balance / ratePerUSD(fx)
-  return Math.floor((balanceUSD / price) * 1_000_000)
+  const tokens = (balanceUSD / price) * 1_000_000
+  return Number.isFinite(tokens) ? Math.floor(tokens) : 0
 }
 
 /**
@@ -241,9 +278,12 @@ export const coverageTokens = (
  *
  * An empty mix (every share 0) is not free, it is meaningless; the sliders
  * cannot build one, but the total check keeps a hand-made mix from claiming ∞.
+ *
+ * Missing or invalid required prices (input/output) make the blend NaN, so the
+ * model is *not* reported as unlimited — unknown is not the same as free.
  */
 export const isUnlimitedCoverage = (model: PricedModel, mix: UsageMix): boolean =>
-  mix.cache + mix.input + mix.output > 0 && blendedPricePerMillionUSD(model, mix) <= 0
+  isValidUsageMix(mix) && blendedPricePerMillionUSD(model, mix) <= 0
 
 /** Biggest first, so a count always lands on the smallest suffix under 1000. */
 const TOKEN_SCALES = [
@@ -338,10 +378,14 @@ export const formatBalanceForDisplay = (balance: string, currency: Currency): st
  */
 export const convertBalance = (balance: string, from: Fx, to: Fx): string => {
   if (from.currency === to.currency) return balance
+  const source = Number(balance) || 0
+  if (!Number.isFinite(source) || source < 0) return '0'
+  const safeSource = Math.min(source, maxSafeBalance(from.currency))
+  const converted = convertAmount(safeSource, from.currency, to.currency, to.rates)
+  if (!Number.isFinite(converted) || converted < 0) return '0'
+  const safeTarget = Math.min(converted, maxSafeBalance(to.currency))
   const factor = 10 ** currencyConfig(to.currency).maxDecimals
-  return String(
-    Math.round(convertAmount(Number(balance) || 0, from.currency, to.currency, to.rates) * factor) / factor,
-  )
+  return String(Math.round(safeTarget * factor) / factor)
 }
 
 /**
@@ -369,6 +413,37 @@ const localeSeparators = (() => {
 })()
 
 /**
+ * Validate that the locale's grouping and decimal separators are used
+ * correctly, so a malformed paste is rejected instead of being silently
+ * re-interpreted. Group separators must separate groups of exactly three
+ * digits (except the most-significant group), must not be leading/trailing,
+ * and must not appear after a decimal separator. The fractional part, if any,
+ * must not exceed the currency's allowed decimal places.
+ */
+const validateNumericSeparators = (
+  raw: string,
+  group: string,
+  decimal: string,
+  maxDecimals: number,
+): boolean => {
+  if (!group && !decimal) return true
+  const parts = decimal ? raw.split(decimal) : [raw]
+  if (decimal && parts.length > 2) return false
+  const [integerPart, fractionalPart] = parts
+  if (fractionalPart) {
+    if (maxDecimals === 0 || fractionalPart.length > maxDecimals) return false
+    if (group && fractionalPart.includes(group)) return false
+  }
+  if (!group || !integerPart.includes(group)) return true
+  const segments = integerPart.split(group)
+  if (segments.some((s) => s === '')) return false
+  for (let i = 1; i < segments.length; i++) {
+    if (!/^\d{3}$/.test(segments[i])) return false
+  }
+  return true
+}
+
+/**
  * Keep raw user input valid for the selected currency while editing.
  *
  * Paste is the case that matters: a copied `1,000.00` (USD) or `15.000`
@@ -376,8 +451,8 @@ const localeSeparators = (() => {
  * separators are resolved and stripped first and must never be read as digits.
  * Otherwise `1,000.00` collapses to `1` (it stopped at the group comma) and an
  * id-ID decimal comma `1,50` (= 1.50) explodes to `150`. A currency with no
- * fraction digits keeps only the leading integer run, so `1,50` is floored to
- * `1` rather than merged into `150`.
+ * fraction digits keeps only the leading integer run, so `1,50` is rejected
+ * rather than merged into `150`.
  */
 export const sanitizeBalanceInput = (raw: string, currency: Currency): string => {
   const { maxDecimals } = currencyConfig(currency)
@@ -385,13 +460,13 @@ export const sanitizeBalanceInput = (raw: string, currency: Currency): string =>
   // A balance is non-negative: a minus sign anywhere makes the amount ambiguous,
   // so reject it rather than drop the sign and silently flip the value.
   if (/[-\u2212]/.test(raw)) return ''
-  let value = raw
+  // Drop a leading label a paste may carry ("Rp ", "$"). Stripped from the
+  // front only, so punctuation between digits (e.g. "12:30") is never merged
+  // into a larger number; a leading "." is kept so ".50" stays 0.50, not 50.
+  let value = raw.replace(/^[^\d.]+/, '')
+  if (!validateNumericSeparators(value, group, decimal, maxDecimals)) return ''
   if (group) value = value.split(group).join('')
   if (decimal && decimal !== '.') value = value.split(decimal).join('.')
-  // Drop a leading label a paste may carry ("Rp ", "$"). Stripped from the front
-  // only, so punctuation between digits (e.g. "12:30") is never merged into a
-  // larger number; a leading "." is kept so ".50" stays 0.50, not 50.
-  value = value.replace(/^[^\d.]+/, '')
   const trimmed =
     maxDecimals === 0
       ? value.match(/^\d*/)?.[0] ?? ''
