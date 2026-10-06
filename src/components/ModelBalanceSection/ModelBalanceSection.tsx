@@ -26,8 +26,8 @@ import "./ModelBalanceSection.css";
 type ModelBalanceSectionProps = {
   /** Active currency + catalog FX rate, resolved once by <Workspace>. */
   fx: Fx;
-  /** Unrounded balance in the active currency, used for coverage calculations. */
-  balance: number;
+  /** Balance amount in the active currency as the user typed it (source of truth). */
+  balanceAmount: string;
   onBalanceChange: (balance: string) => void;
 };
 
@@ -44,7 +44,7 @@ const mixCaption = (mix: UsageMix) =>
  */
 export function ModelBalanceSection({
   fx,
-  balance,
+  balanceAmount,
   onBalanceChange,
 }: ModelBalanceSectionProps) {
   const {
@@ -61,12 +61,13 @@ export function ModelBalanceSection({
   const [balanceFocused, setBalanceFocused] = useState(false);
   const config = currencyConfig(fx.currency);
 
-  // Sanitizing onChange does not cover currency-derived balances: a valid USD
-  // amount can convert to an IDR value above MAX_SAFE_INTEGER, where `Number`
-  // loses integer precision. Cap the calculation balance to the currency's safe
-  // ceiling and warn the user rather than silently producing wrong coverage.
-  const balanceOutOfRange = balance > maxSafeBalance(fx.currency);
-  const calculationBalance = balanceOutOfRange ? maxSafeBalance(fx.currency) : balance;
+  // The input value is the raw string the user typed. Parse + round it for
+  // coverage math; this is the only place the numeric balance is derived.
+  const balanceNumber = Number(balanceAmount) || 0;
+  const balanceOutOfRange = balanceNumber > maxSafeBalance(fx.currency);
+  const calculationBalance = balanceOutOfRange
+    ? maxSafeBalance(fx.currency)
+    : balanceNumber;
 
   return (
     <Box
@@ -125,8 +126,8 @@ export function ModelBalanceSection({
                   inputMode={config.inputMode}
                   value={
                     balanceFocused
-                      ? String(balance)
-                      : formatBalanceForDisplay(String(balance), fx.currency)
+                      ? balanceAmount
+                      : formatBalanceForDisplay(balanceAmount, fx.currency)
                   }
                   onFocus={() => setBalanceFocused(true)}
                   onBlur={() => setBalanceFocused(false)}
@@ -211,18 +212,21 @@ export function ModelBalanceSection({
         {status === "ready" &&
           /* Selection is an ordered list, so empty slots are always trailing:
              clearing COMPARE 2 promotes COMPARE 3 and 4 up one position. */
-          Array.from({ length: MAX_SELECTED }, (_, slot) => (
-            <ModelSlot
-              key={slot}
-              slot={slot}
-              model={selectedModels[slot]}
-              balance={calculationBalance}
-              fx={fx}
-              usageMix={usageMix}
-              onAdd={addFirstAvailable}
-              onClear={removeModel}
-            />
-          ))}
+          Array.from({ length: MAX_SELECTED }, (_, slot) => {
+            const model = selectedModels[slot]
+            return (
+              <ModelSlot
+                key={model?.id ?? `empty-${slot}`}
+                slot={slot}
+                model={model}
+                balance={calculationBalance}
+                fx={fx}
+                usageMix={usageMix}
+                onAdd={addFirstAvailable}
+                onClear={removeModel}
+              />
+            )
+          })}
       </Box>
     </Box>
   );

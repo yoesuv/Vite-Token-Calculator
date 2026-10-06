@@ -381,7 +381,9 @@ export const convertBalance = (balance: string, from: Fx, to: Fx): string => {
   const source = Number(balance) || 0
   if (!Number.isFinite(source) || source < 0) return '0'
   const safeSource = Math.min(source, maxSafeBalance(from.currency))
-  const converted = convertAmount(safeSource, from.currency, to.currency, to.rates)
+  // Convert through the USD pivot using each Fx's own rate table, so a source
+  // value typed under fallback rates is not re-valued at the target's rates.
+  const converted = (safeSource / ratePerUSD(from)) * ratePerUSD(to)
   if (!Number.isFinite(converted) || converted < 0) return '0'
   const safeTarget = Math.min(converted, maxSafeBalance(to.currency))
   const factor = 10 ** currencyConfig(to.currency).maxDecimals
@@ -434,9 +436,12 @@ const validateNumericSeparators = (
     if (maxDecimals === 0 || fractionalPart.length > maxDecimals) return false
     if (group && fractionalPart.includes(group)) return false
   }
-  if (!group || !integerPart.includes(group)) return true
+  // Without a group separator the integer part must still be a plain digit
+  // run; otherwise a malformed paste like `12a.345` silently truncates.
+  if (!group || !integerPart.includes(group)) return /^\d+$/.test(integerPart)
   const segments = integerPart.split(group)
-  if (segments.some((s) => s === '')) return false
+  // Most-significant group: 1-3 digits; every following group: exactly 3.
+  if (!/^\d{1,3}$/.test(segments[0])) return false
   for (let i = 1; i < segments.length; i++) {
     if (!/^\d{3}$/.test(segments[i])) return false
   }

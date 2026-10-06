@@ -111,14 +111,18 @@ export const exchangeRatesFromRows = (rows: readonly ApiModel[]): ExchangeRates 
  * primary; a `provider/` with no slug strips to an empty display name the same
  * way.
  */
-const isUsableName = (name: unknown): name is string => {
-  if (typeof name !== 'string') return false
-  const separator = name.indexOf('/')
-  const slug = (separator > 0 ? name.slice(separator + 1) : name)
+/** Extract the display slug from an API name and normalize it for rendering. */
+const displaySlug = (name: string): string =>
+  name
+    .slice(name.indexOf('/') + 1)
     .replace(/^\/+|\/+$/g, '')
     .trim()
     .replace(/[-_]+/g, ' ')
-  return slug.trim().length > 0
+    .trim()
+
+const isUsableName = (name: unknown): name is string => {
+  if (typeof name !== 'string') return false
+  return displaySlug(name).length > 0
 }
 
 /**
@@ -154,6 +158,13 @@ export const validateCatalogRows = (data: unknown): ApiModel[] => {
     if (!isRate(row.input) || !isRate(row.output) || !isOptionalRate(row.cache)) {
       throw new Error(`The models API returned an invalid price for ${row.name}.`)
     }
+    if (
+      typeof row.context !== 'number' || !Number.isFinite(row.context) ||
+      !Array.isArray(row.modalities) || !row.modalities.every((m) => typeof m === 'string') ||
+      !isTimestampOrNull(row.cutoff) || !isTimestampOrNull(row.released)
+    ) {
+      throw new Error(`The models API returned an invalid catalog entry for ${row.name}.`)
+    }
     seen.add(row.id)
   }
   return data as ApiModel[]
@@ -167,6 +178,16 @@ export const validateCatalogRows = (data: unknown): ApiModel[] => {
  * non-positive rates are dropped).
  */
 export type Catalog = { models: ApiModel[]; rates: ExchangeRates }
+
+/** A Firestore-style timestamp, or an explicit `null` for unknown dates. */
+const isTimestampOrNull = (value: unknown): value is ApiTimestamp | null =>
+  value === null ||
+  (typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ApiTimestamp)._seconds === 'number' &&
+    Number.isFinite((value as ApiTimestamp)._seconds) &&
+    typeof (value as ApiTimestamp)._nanoseconds === 'number' &&
+    Number.isFinite((value as ApiTimestamp)._nanoseconds))
 
 /**
  * Compare limit — one primary slot plus four compare slots. The picker's
@@ -195,14 +216,10 @@ export type CatalogModel = ApiModel & {
 export const toCatalogModel = (model: ApiModel): CatalogModel => {
   const separator = model.name.indexOf('/')
   const provider = separator > 0 ? model.name.slice(0, separator) : 'other'
-  const slug = (separator > 0 ? model.name.slice(separator + 1) : model.name)
-    .replace(/^\/+|\/+$/g, '')
-    .trim()
+  const slug = displaySlug(model.name)
   return {
     ...model,
-    displayName: slug
-      .replace(/[-_]+/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase()),
+    displayName: slug.replace(/\b\w/g, (char) => char.toUpperCase()),
     fullName: model.name,
     provider,
   }

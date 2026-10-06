@@ -18,6 +18,18 @@ export default defineConfig([
       'no-new-func': 'error',
       'no-implied-eval': 'error',
       'no-extend-native': 'error',
+      'no-restricted-properties': [
+        'error',
+        { object: 'document', property: 'write' },
+        { object: 'document', property: 'writeln' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "AssignmentExpression > MemberExpression.left[property.name=/^(innerHTML|outerHTML)$/]",
+          message: 'Use textContent or sanitize input.',
+        },
+      ],
     },
     languageOptions: {
       globals: globals.node,
@@ -41,6 +53,22 @@ export default defineConfig([
       'no-new-func': 'error',
       'no-implied-eval': 'error',
       'no-extend-native': 'error',
+      'no-restricted-properties': [
+        'error',
+        { object: 'document', property: 'write' },
+        { object: 'document', property: 'writeln' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "AssignmentExpression > MemberExpression.left[property.name=/^(innerHTML|outerHTML)$/]",
+          message: 'Use textContent or sanitize input.',
+        },
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message: 'dangerouslySetInnerHTML is prohibited.',
+        },
+      ],
     },
   },
 ])

@@ -1,5 +1,6 @@
 import { Box, Button, HStack, Text } from "@chakra-ui/react";
 import {
+  blendedPricePerMillionUSD,
   coverageTokens,
   formatPriceInfo,
   formatTokenCount,
@@ -71,11 +72,37 @@ export function ModelSlot({
 
   // A $0 blend means the mix only weights free/unpublished rates: the balance
   // buys unlimited tokens, so the 0 from coverageTokens' guard must not render.
+  // A NaN blend means a required price is unknown: show "unavailable" instead
+  // of "0 tokens", which would wrongly imply the balance buys nothing.
+  const blend = blendedPricePerMillionUSD(model, usageMix);
+  const priceUnknown = Number.isNaN(blend);
   const unlimited = isUnlimitedCoverage(model, usageMix);
-  const coverage = formatTokenCount(
-    coverageTokens(balance, model, fx, usageMix),
-    fx,
-  );
+  const coverage = priceUnknown
+    ? { value: '', unit: '' }
+    : formatTokenCount(coverageTokens(balance, model, fx, usageMix), fx);
+
+  const renderCoverageValue = () => {
+    if (priceUnknown) {
+      return <Text className="coverage-value is-unavailable">Unavailable</Text>
+    }
+    if (unlimited) {
+      return <Text className="coverage-value is-unlimited">Unlimited</Text>
+    }
+    return (
+      <Text className="coverage-value">
+        {coverage.value}
+        {coverage.unit ? (
+          <span className="coverage-unit">{coverage.unit}</span>
+        ) : null}
+      </Text>
+    )
+  }
+
+  const renderCoverageNote = () => {
+    if (priceUnknown) return "pricing unavailable for this model"
+    if (unlimited) return "tokens — no cost at this mix"
+    return "tokens with this balance"
+  }
 
   return (
     <Box className="model-slot has-model">
@@ -104,21 +131,8 @@ export function ModelSlot({
         {/* A $0 blended rate is free, not unaffordable: show Unlimited instead of
             coverageTokens' 0 guard, which would claim a positive balance buys
             nothing. See isUnlimitedCoverage. */}
-        {unlimited ? (
-          <Text className="coverage-value is-unlimited">Unlimited</Text>
-        ) : (
-          <Text className="coverage-value">
-            {coverage.value}
-            {coverage.unit ? (
-              <span className="coverage-unit">{coverage.unit}</span>
-            ) : null}
-          </Text>
-        )}
-        <Text className="coverage-note">
-          {unlimited
-            ? "tokens — no cost at this mix"
-            : "tokens with this balance"}
-        </Text>
+        {renderCoverageValue()}
+        <Text className="coverage-note">{renderCoverageNote()}</Text>
       </Box>
       {/* Both rates come straight from the catalog (`input`/`output`, US cents
           per 1M) and render in the active currency at the active FX rate: 200 →
