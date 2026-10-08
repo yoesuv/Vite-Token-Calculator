@@ -42,16 +42,21 @@ export function useColorMode() {
   // Mirror the mode onto <html>: Chakra's token CSS flips on `html.dark`, and
   // the UA needs `color-scheme` for scrollbars and native controls.
   // (index.html applies the same class pre-paint to avoid a flash.)
-  // Persist here too — committed effects keep storage in sync with the
-  // rendered mode, unlike writes inside updater functions.
+  // Only sync the document — persistence is owned by toggleColorMode so an
+  // OS-derived initial mode never gets written to storage as if the user had
+  // picked it. Once the user toggles, their choice (and any later toggles)
+  // are persisted, and future OS changes stop being followed.
   useEffect(() => {
     document.documentElement.classList.toggle('dark', colorMode === 'dark')
     document.documentElement.style.colorScheme = colorMode
-    try { localStorage.setItem(STORAGE_KEY, colorMode) } catch { /* Keep the mode in memory. */ }
   }, [colorMode])
 
   const toggleColorMode = useCallback(() => {
-    setColorMode((current) => (current === 'dark' ? 'light' : 'dark'))
+    setColorMode((current) => {
+      const next = current === 'dark' ? 'light' : 'dark'
+      try { localStorage.setItem(STORAGE_KEY, next) } catch { /* Keep the mode in memory. */ }
+      return next
+    })
   }, [])
 
   return { colorMode, toggleColorMode }

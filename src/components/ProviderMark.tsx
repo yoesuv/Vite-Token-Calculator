@@ -45,6 +45,7 @@ const providerIcons: Record<string, ProviderIcon> = {
   meta: Meta.Color,
   minimax: Minimax.Color,
   mistral: Mistral.Color,
+  mistralai: Mistral.Color,
   moonshot: Kimi.Color,
   moonshotai: Moonshot,
   openai: OpenAI,

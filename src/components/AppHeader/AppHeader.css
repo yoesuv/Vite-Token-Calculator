@@ -151,8 +151,8 @@
 /* Dropdown items: larger and roomier than the collapsed pill label. */
 .currency-select option {
   padding: 8px 12px;
-  color: initial;
-  background: initial;
+  color: var(--chakra-colors-fg);
+  background: var(--chakra-colors-bg-panel);
   font-family: var(--chakra-fonts-body);
   font-size: 14px;
   letter-spacing: 0.2px;

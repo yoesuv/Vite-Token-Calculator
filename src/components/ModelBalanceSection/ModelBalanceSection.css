@@ -147,9 +147,17 @@
 .usage-slider-heading strong { color: var(--chakra-colors-accent); font-size: 17px; }
 
 
-.model-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); column-gap: 1px; row-gap: 0; margin-top: 18px; align-items: stretch; background: var(--chakra-colors-border); }
+.model-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-top: 18px; align-items: stretch; background: var(--chakra-colors-bg-panel); }
 .model-slot { min-width: 0; padding: 14px 18px; border: 0; background: var(--chakra-colors-bg-panel); }
-/* Align the outer cards' text with the balance row above (dividers are grid gaps, not borders). */
+/* Dividers are borders on the slots, not grid gaps: an odd slot count
+   (MAX_SELECTED = 5) that wraps across columns always leaves one trailing
+   empty grid cell, and a gap-bleed background would paint it solid with the
+   divider colour. Borders leave that cell invisible on the panel colour. */
+.model-slot { border-right: 1px solid var(--chakra-colors-border); border-bottom: 1px solid var(--chakra-colors-border); }
+/* Wide layout is a single row of five: vertical dividers only, and the outer
+   cards align to the section edges so their text lines up with the balance row. */
+.model-slot { border-bottom: 0; }
+.model-slot:last-child { border-right: 0; }
 .model-slot:first-child { padding-left: 0; }
 .model-slot:last-child { padding-right: 0; }
 .slot-heading { display: flex; height: 20px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -186,13 +194,9 @@
 .price-row { flex-wrap: wrap; gap: 8px; color: var(--chakra-colors-fg-muted); font-size: 11px; }
 .price-row strong { min-width: 0; margin-left: auto; color: var(--chakra-colors-fg); font-size: 12px; white-space: normal; }
 
-/* Empty placeholder: the :first-child/:last-child padding trims let filled
-   slots align to the section edges, but they leave the placeholder's + icon /
-   label / hint off-center inside its card. Reset to symmetric padding with
-   higher specificity than the trim rules above. */
-.model-slot.empty-slot { padding: 14px 18px; }
-.model-slot.empty-slot:first-child { padding-left: 18px; }
-.model-slot.empty-slot:last-child { padding-right: 18px; }
+/* Empty placeholder: the add-model card occupies a normal slot, so it inherits
+   the column-aligned padding and divider rules above rather than being forced to
+   symmetric padding (the centered + content reads fine at any column trim). */
 
 .add-model { display: flex; width: 100%; height: 100%; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 0; background: transparent; color: var(--chakra-colors-fg); cursor: pointer; }
 .add-model span { display: grid; width: 40px; height: 40px; place-items: center; border: 1px dashed var(--chakra-colors-border-subtle); border-radius: 5px; color: var(--chakra-colors-accent); }
@@ -211,7 +215,23 @@
 .add-model small { color: var(--chakra-colors-fg-muted); font-size: 12px; }
 
 @media (max-width: 850px) {
-  .balance-section { padding: 26px 28px 20px; }  .model-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .balance-section { padding: 26px 28px 20px; }
+}
+
+/* Two-column slot grid (medium widths): the left column is flush-left and the
+   right column flush-right, with both vertical and (between wrapped rows)
+   horizontal dividers. Scoped to 561–991px so it never leaks into the
+   single-column layout below. The lone card in the trailing row keeps no right
+   or bottom border, since it has no neighbour on either side. */
+@media (max-width: 991px) and (min-width: 561px) {
+  .model-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .model-slot { border-bottom: 1px solid var(--chakra-colors-border); }
+  .model-slot:first-child { padding-left: 18px; }
+  .model-slot:last-child { padding-right: 18px; }
+  .model-slot:nth-child(odd) { padding-left: 0; }
+  .model-slot:nth-child(even) { padding-right: 0; }
+  .model-slot:nth-child(even) { border-right: 0; }
+  .model-slot:last-child { border-right: 0; border-bottom: 0; }
 }
 
 @media (max-width: 560px) {
@@ -222,7 +242,10 @@
   .usage-area { width: 100%; text-align: left; }
   .usage-button { width: 100%; }
   .model-slots { grid-template-columns: 1fr; margin-top: 12px; }
-  .model-slot { padding: 14px 16px; }
+  /* Single column: full-width cards with symmetric padding and no dividers. */
+  .model-slot { padding: 14px 16px; border-right: 0; border-bottom: 0; }
+  .model-slot:first-child { padding-left: 16px; }
+  .model-slot:last-child { padding-right: 16px; }
   .add-model { min-height: 150px; }
   /* Usage dialog on narrow screens: the two note lines take the full width and
      the two buttons split the next one evenly, so nothing overflows the dialog. */

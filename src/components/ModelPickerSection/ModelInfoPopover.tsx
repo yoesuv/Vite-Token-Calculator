@@ -2,6 +2,7 @@ import { Portal, Popover } from "@chakra-ui/react";
 import { InfoIcon } from "../icons";
 import { type CatalogModel } from "../../lib/modelCatalog";
 import { formatPriceInfo, type Fx } from "../../lib/pricing";
+import { formatApiTimestamp } from "../../lib/formatDate";
 import { ProviderMark } from "../ProviderMark";
 import "./ModelInfoPopover.css";
 
@@ -12,37 +13,6 @@ const contextFormatter = new Intl.NumberFormat("en-US", {
 });
 const formatContext = (tokens: number): string =>
   Number.isFinite(tokens) && tokens > 0 ? contextFormatter.format(tokens) : "—";
-
-/**
- * Is this a timestamp we can actually show? `validateCatalogRows` never checks
- * the timestamps, so the shape is only a compile-time promise: `{}` (or a
- * missing/non-number/out-of-range `_seconds`) must count as unpublished. An
- * out-of-range instant still *builds* a Date — only its getTime() tells on it.
- */
-const isDisplayableTimestamp = (
-  ts: { _seconds: number } | null | undefined,
-): ts is { _seconds: number } => {
-  if (ts === null || ts === undefined || typeof ts._seconds !== "number" || !Number.isFinite(ts._seconds)) {
-    return false;
-  }
-  return Number.isFinite(new Date(ts._seconds * 1000).getTime());
-};
-
-/**
- * Short date from the API's Firestore timestamp shape (`{_seconds}`), or "—"
- * for anything malformed — never the literal "Invalid Date". Formatted in UTC:
- * the API publishes midnight-UTC dates, and a viewer west of UTC would
- * otherwise be shown the day before.
- */
-const formatTimestamp = (ts: { _seconds: number } | null | undefined): string => {
-  if (!isDisplayableTimestamp(ts)) return "—";
-  return new Date(ts._seconds * 1000).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-};
 
 /** "moonshotai" -> "Moonshotai"; already-styled slugs like "x-ai" are left alone. */
 const formatProvider = (provider: string): string =>
@@ -79,14 +49,14 @@ const MODEL_FACTS: {
   { key: "cache", label: "Cache read · per 1M", value: (m, fx) => formatPriceInfo(m, "cache", fx) },
   { key: "context", label: "Context", value: (m) => formatContext(m.context) },
   { key: "modalities", label: "Modalities", value: (m) => formatModalities(m.modalities) },
-  { key: "released", label: "Released", value: (m) => formatTimestamp(m.released) },
+  { key: "released", label: "Released", value: (m) => formatApiTimestamp(m.released) },
   {
     key: "cutoff",
     label: "Knowledge cutoff",
-    value: (m) => formatTimestamp(m.cutoff),
+    value: (m) => formatApiTimestamp(m.cutoff),
     // No *displayable* cutoff (null/undefined/malformed) → omit the row
     // rather than show "—".
-    show: (m) => isDisplayableTimestamp(m.cutoff),
+    show: (m) => formatApiTimestamp(m.cutoff) !== "—",
   },
 ];
 

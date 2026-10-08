@@ -36,11 +36,11 @@ const config = defineConfig({
           DEFAULT: { value: { _light: '#24231f', _dark: '#eceae4' } },
           heading: { value: { _light: '#272620', _dark: '#f2f0ea' } },
           muted: { value: { _light: '#706e68', _dark: '#a5a29a' } },
-          subtle: { value: { _light: '#6f6c65', _dark: '#918d86' } },
+          subtle: { value: { _light: '#8a8880', _dark: '#7d7a72' } },
         },
         border: {
           DEFAULT: { value: { _light: '#e4e1da', _dark: '#34322d' } },
-          subtle: { value: { _light: '#d5d5d5', _dark: '#3d3b35' } },
+          subtle: { value: { _light: '#e8e6e0', _dark: '#2a2925' } },
         },
         // Brand accent — shared by both modes.
         accent: { value: { _light: '#BF3652', _dark: '#FF788D' } },
