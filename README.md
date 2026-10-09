@@ -1,38 +1,40 @@
 # Token Calculator
 
-## Information
+Find out how many AI model tokens your money can buy.
 
-Token Calculator is a browser-based tool for estimating how far your money goes with AI models. Enter your available balance in your local currency and compare how many tokens it buys across multiple models side by side.
+Enter your available balance in your local currency and compare how many tokens it buys across several models, side by side. No account needed.  
+https://token-calculator-43db8.web.app/
 
-- Model pricing and FX rates come from a live, Firebase App Check–protected model catalog
-- Adjustable usage composition (cache read / input / output mix) so estimates match real workloads
-- Per-slot coverage estimate, plus input and output prices per 1M tokens in the active currency
-- Multi-currency support (e.g. IDR, USD) with catalog-published rates and locale-aware formatting
-- Runs entirely in the browser — no account required
+## Features
 
-## Tech Stack
+- **Compare models side by side:** see how far your balance goes on each model.
+- **Live pricing and FX rates:** fetched from a model catalog, so numbers stay current.
+- **Match your workload:** adjust the mix of cache read, input, and output tokens to fit how you actually use models.
+- **Coverage estimate per slot:** see how much of your usage each model slot can cover.
+- **Prices per 1M tokens:** input and output prices in the currency you pick.
+- **Multiple currencies:** for example IDR and USD, with locale-aware formatting.
+- **Model details:** the model picker shows info for each model, including max output tokens.
+- **Light and dark mode.**
 
-- [React 19](https://react.dev) + TypeScript
-- [Vite](https://vite.dev) for dev tooling and builds
-- [Chakra UI 3](https://chakra-ui.com) for the component system and theming (light/dark color mode)
-- [Firebase](https://firebase.google.com) (App Check) for securing the catalog endpoint
-- [Axios](https://axios-http.com) for catalog transport
+## Getting started
 
-## Packages
+### Requirements
 
-Extra libraries beyond the React/Vite/Chakra framework itself:
+- Node.js `^20.19.0` or `>=22.12.0` (required by Vite 8)
 
-- @chakra-ui/react
-- firebase
-- axios
-- @lobehub/icons
-- react-icons
+Open the local URL that Vite prints.
 
-## Scripts
+### Configuration
 
-```bash
-npm run dev      # start the dev server
-npm run build    # type-check and build for production
-npm run lint     # run ESLint
-npm run preview  # preview the production build
-```
+The app reads its Firebase, reCAPTCHA Enterprise, and catalog endpoint settings from `.env.local`. The file `.env.example` lists every variable.
+
+`VITE_APPCHECK_DEBUG_TOKEN` is for local development only. Leave it blank in production.
+
+## Tech stack
+
+- [React 19](https://react.dev) with TypeScript
+- [Vite](https://vite.dev)
+- [Chakra UI 3](https://chakra-ui.com) for components and theming
+- [Firebase](https://firebase.google.com) (App Check) to protect the catalog endpoint
+- [Axios](https://axios-http.com) for catalog requests
+- Also: `@lobehub/icons`, `react-icons`
