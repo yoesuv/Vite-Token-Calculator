@@ -6,13 +6,13 @@ import { formatApiTimestamp } from "../../lib/formatDate";
 import { ProviderMark } from "../ProviderMark";
 import "./ModelInfoPopover.css";
 
-/** Compact token count for context windows: 128000 -> "128K", 1000000 -> "1M". */
-const contextFormatter = new Intl.NumberFormat("en-US", {
+/** Compact token count: 128000 -> "128K", 1000000 -> "1M". */
+const tokenFormatter = new Intl.NumberFormat("en-US", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
-const formatContext = (tokens: number): string =>
-  Number.isFinite(tokens) && tokens > 0 ? contextFormatter.format(tokens) : "—";
+const formatTokens = (tokens: number | null | undefined): string =>
+  Number.isFinite(tokens) && (tokens as number) > 0 ? tokenFormatter.format(tokens as number) : "—";
 
 /** "moonshotai" -> "Moonshotai"; already-styled slugs like "x-ai" are left alone. */
 const formatProvider = (provider: string): string =>
@@ -47,7 +47,13 @@ const MODEL_FACTS: {
   { key: "input", label: "Input · per 1M", value: (m, fx) => formatPriceInfo(m, "input", fx) },
   { key: "output", label: "Output · per 1M", value: (m, fx) => formatPriceInfo(m, "output", fx) },
   { key: "cache", label: "Cache read · per 1M", value: (m, fx) => formatPriceInfo(m, "cache", fx) },
-  { key: "context", label: "Context", value: (m) => formatContext(m.context) },
+  { key: "context", label: "Context", value: (m) => formatTokens(m.context) },
+  {
+    key: "max-output",
+    label: "Max Output",
+    value: (m) => formatTokens(m.max),
+    show: (m) => formatTokens(m.max) !== "—",
+  },
   { key: "modalities", label: "Modalities", value: (m) => formatModalities(m.modalities) },
   { key: "released", label: "Released", value: (m) => formatApiTimestamp(m.released) },
   {

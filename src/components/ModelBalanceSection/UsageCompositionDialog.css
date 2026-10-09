@@ -2,7 +2,7 @@
 .usage-slider [data-part="control"] { position: relative; display: flex; align-items: center; height: 24px; }
 .usage-slider [data-part="track"] { position: relative; overflow: hidden; width: 100%; height: 8px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 999px; background: var(--chakra-colors-bg-muted) !important; }
 .usage-slider [data-part="range"] { position: absolute; top: 0; right: auto; bottom: 0; left: var(--slider-range-start); width: auto !important; height: auto; border-radius: inherit; background: var(--chakra-colors-accent) !important; }
-.usage-slider [data-part="thumb"] { top: 50%; width: 22px; height: 22px; border: 2px solid var(--chakra-colors-bg-panel); border-radius: 50%; outline: 0; background: var(--chakra-colors-fg-heading); box-shadow: 0 1px 4px rgb(0 0 0 / 24%); transform: translate(-50%, -50%); }
+.usage-slider [data-part="thumb"] { top: 50%; width: 22px; height: 22px; border: 2px solid var(--chakra-colors-bg-panel); border-radius: 50%; outline: 0; background: var(--chakra-colors-fg-heading); box-shadow: 0 1px 4px rgb(0 0 0 / 24%); /* Ark sets an inline `transform: translateX(-50%)` on the thumb, which overrides any stylesheet `transform`. Use the separate `translate` property: it is not overridden by the inline transform and stacks with it, adding the missing cross-axis (vertical) centering. */ translate: 0 -50%; }
 /* Focus ring on the outline (box-shadow rings vanish in forced-colors mode); the
    soft shadow beside it is decoration only. */
 .usage-slider [data-part="thumb"]:focus-visible { outline: 3px solid var(--chakra-colors-focus-ring); outline-offset: 1px; box-shadow: 0 1px 4px rgb(0 0 0 / 24%); }

@@ -29,6 +29,7 @@ export type ApiModel = {
   output: number
   cache?: number | null
   context: number
+  max?: number | null
   modalities: string[]
   cutoff: ApiTimestamp | null
   released: ApiTimestamp | null
@@ -160,6 +161,7 @@ export const validateCatalogRows = (data: unknown): ApiModel[] => {
     }
     if (
       typeof row.context !== 'number' || !Number.isFinite(row.context) ||
+      (row.max !== undefined && row.max !== null && (typeof row.max !== 'number' || !Number.isFinite(row.max))) ||
       !Array.isArray(row.modalities) || !row.modalities.every((m) => typeof m === 'string') ||
       !isTimestampOrNull(row.cutoff) || !isTimestampOrNull(row.released)
     ) {

@@ -11,7 +11,7 @@
 .dark .picker-info { background: var(--chakra-colors-bg-subtle); }
 
 /* Info popover panel: fixed width so prices/dates don't jitter. */
-.picker-pop { width: 288px; max-width: calc(100vw - 32px); }
+.picker-pop { width: 300px; max-width: calc(100vw - 32px); }
 .picker-pop-head { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid var(--chakra-colors-border-subtle); }
 .picker-pop-head .provider-mark { flex: 0 0 34px; width: 34px; height: 34px; }
 .picker-pop-title { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 3px; }

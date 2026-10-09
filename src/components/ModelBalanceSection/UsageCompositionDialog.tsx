@@ -61,26 +61,25 @@ export function UsageCompositionDialog({
     const basisTotal = currentBasis[remainingKeys[0]] + currentBasis[remainingKeys[1]];
     const targetRemaining = 100 - value;
 
-    setMix((current) => {
-      if (basisTotal === 0) {
-        return {
-          ...current,
-          [key]: value,
-          [remainingKeys[0]]: Math.round(targetRemaining / 2),
-          [remainingKeys[1]]: Math.floor(targetRemaining / 2),
-        };
-      }
-
-      const firstValue = Math.round(
+    // The snapshot plus the dragged value already pin all three shares, so the
+    // next mix is derived without reading the pending one.
+    let firstValue: number;
+    let lastValue: number;
+    if (basisTotal === 0) {
+      firstValue = Math.round(targetRemaining / 2);
+      lastValue = Math.floor(targetRemaining / 2);
+    } else {
+      firstValue = Math.round(
         (targetRemaining * currentBasis[remainingKeys[0]]) / basisTotal,
       );
-      return {
-        ...current,
-        [key]: value,
-        [remainingKeys[0]]: firstValue,
-        [remainingKeys[1]]: targetRemaining - firstValue,
-      };
-    });
+      lastValue = targetRemaining - firstValue;
+    }
+
+    const nextMix: UsageMix = { cache: 0, input: 0, output: 0 };
+    nextMix[key] = value;
+    nextMix[remainingKeys[0]] = firstValue;
+    nextMix[remainingKeys[1]] = lastValue;
+    setMix(nextMix);
   };
 
   return (
