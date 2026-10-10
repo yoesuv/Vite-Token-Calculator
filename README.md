@@ -28,7 +28,12 @@ Open the local URL that Vite prints.
 
 The app reads its Firebase, reCAPTCHA Enterprise, and catalog endpoint settings from `.env.local`. The file `.env.example` lists every variable.
 
-`VITE_APPCHECK_DEBUG_TOKEN` is for local development only. Leave it blank in production.
+`VITE_APPCHECK_DEBUG_TOKEN` is for local development only — a production build drops the code that reads it entirely (see the `import.meta.env.DEV` guard in `src/lib/firebase.ts`), so there is nothing to switch off in prod.
+
+- **Leave it blank** and App Check mints a token for you: the first load in a browser prints `Firebase App Check debug token: <uuid>`, and the SDK stores it in IndexedDB, so reloads reuse the same one.
+- **Register it** before it works — an unregistered token is rejected by the token exchange. Firebase Console → App Check → Apps, or `firebase appcheck:debugtokens:create <uuid> --project <project-id> --app <app-id>`.
+- **Then pin it** in `.env.local`, so another browser or profile reuses your token instead of generating yet another one.
+- **Treat the dev console as sensitive.** While debug mode is on the SDK logs the token on *every* load, pinned tokens included — so don't screenshot or screen-record a dev console, and keep the registered token out of git (`.env.local` is gitignored). Revoke it when you are done: `firebase appcheck:debugtokens:delete`.
 
 ## Tech stack
 

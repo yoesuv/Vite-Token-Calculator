@@ -52,10 +52,17 @@ export const app = initializeApp(firebaseConfig);
 
 // In local dev, App Check would otherwise fail because reCAPTCHA can't verify
 // a localhost origin reliably. Firebase gives you a debug token instead.
-// NEVER enable this in production.
+// NEVER enable this in production — and note it cannot be: `import.meta.env.DEV`
+// is statically `false` in a prod build, so this whole block is dead-code
+// eliminated and never reaches the bundle.
 if (isFirebaseConfigured && import.meta.env.DEV) {
-  // Pin to a fixed token (from .env.local) so it doesn't change on every reload.
-  // Falls back to `true` (random token, printed to console) if not set.
+  // A pinned token (from .env.local) is used as-is. Unset falls back to `true`,
+  // which makes the SDK read its debug token from IndexedDB and mint + print a
+  // random one only on the FIRST load in that browser — it then persists it, so
+  // reloads keep the same token. Register that token (Firebase Console → App
+  // Check, or `firebase appcheck:debugtokens:create`) or the exchange fails.
+  // Caveat: while debug mode is on, `initializeAppCheck` logs
+  // `Firebase App Check debug token: …` on EVERY load, pinned tokens included.
   // @ts-expect-error FIREBASE_APPCHECK_DEBUG_TOKEN is a debug-only global.
   self.FIREBASE_APPCHECK_DEBUG_TOKEN =
     import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true;
