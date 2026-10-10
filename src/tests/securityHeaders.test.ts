@@ -58,12 +58,24 @@ function cspSources(directive: string): string[] {
 
 /**
  * Endpoints the app really talks to. Kept in sync with `src/lib/firebase.ts`
- * (App Check) and `VITE_AI_MODELS_URL` (catalog Cloud Function). A new origin
- * belongs here only when the code actually starts calling it.
+ * (App Check), `src/lib/analytics.ts` (GA4), and `VITE_AI_MODELS_URL` (catalog
+ * Cloud Function). A new origin belongs here only when the code actually starts
+ * calling it.
  */
 const ALLOWED_CONNECT_ORIGINS = [
   'https://content-firebaseappcheck.googleapis.com',
   'https://asia-southeast2-token-calculator-43db8.cloudfunctions.net',
+  'https://www.googletagmanager.com',
+]
+
+/**
+ * The ONLY sanctioned wildcards: GA4 routes collect pings through regional
+ * subdomains (region1/eu1/...), so Google's documented endpoint set is
+ * wildcarded. Scoped to analytics domains only — nothing else earns one.
+ */
+const ALLOWED_CONNECT_WILDCARDS = [
+  'https://*.google-analytics.com',
+  'https://*.analytics.google.com',
 ]
 
 describe.skipIf(hostingConfig === undefined)('firebase.json hosting security headers', () => {
@@ -111,8 +123,15 @@ describe.skipIf(hostingConfig === undefined)('firebase.json hosting security hea
     for (const source of sources) {
       if (source === 'self') continue
       // Wildcards such as https://*.cloudfunctions.net are every project's
-      // endpoints: a successful injection could exfil through them.
-      expect(source, `connect-src uses a wildcard: ${source}`).not.toMatch(/\*\./)
+      // endpoints: a successful injection could exfil through them. Only the
+      // pinned Google-analytics set (ALLOWED_CONNECT_WILDCARDS) is exempt.
+      if (source.includes('*.')) {
+        expect(
+          ALLOWED_CONNECT_WILDCARDS,
+          `unexpected connect-src wildcard: ${source}`,
+        ).toContain(source)
+        continue
+      }
       expect(
         ALLOWED_CONNECT_ORIGINS,
         `unexpected connect-src origin: ${source}`,

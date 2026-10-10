@@ -12,6 +12,9 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  // GA4 Measurement ID for Firebase Analytics (src/lib/analytics.ts). Optional:
+  // analytics stays off when unset; the other services ignore it.
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // The values the app cannot function without. `.env.example` ships them blank,

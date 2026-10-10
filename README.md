@@ -14,6 +14,7 @@ https://token-calculator-43db8.web.app/
 - **Prices per 1M tokens:** input and output prices in the currency you pick.
 - **Multiple currencies:** for example IDR and USD, with locale-aware formatting.
 - **Model details:** the model picker shows info for each model, including max output tokens.
+- **Usage analytics:** Firebase Analytics (GA4) measures visits and feature usage; it stays completely off when not configured.
 - **Light and dark mode.**
 
 ## Getting started
@@ -28,6 +29,8 @@ Open the local URL that Vite prints.
 
 The app reads its Firebase, reCAPTCHA Enterprise, and catalog endpoint settings from `.env.local`. The file `.env.example` lists every variable.
 
+Analytics needs one extra optional variable: set `VITE_FIREBASE_MEASUREMENT_ID` to the GA4 Measurement ID from Firebase Console → Analytics. It only takes effect when Analytics is enabled for the Firebase project; left blank, the app runs exactly as before with no tracking (see `src/lib/analytics.ts`). To watch events locally, open Analytics → DebugView in the console and add `debug_mode: true` to a test event.
+
 `VITE_APPCHECK_DEBUG_TOKEN` is for local development only — a production build drops the code that reads it entirely (see the `import.meta.env.DEV` guard in `src/lib/firebase.ts`), so there is nothing to switch off in prod.
 
 - **Leave it blank** and App Check mints a token for you: the first load in a browser prints `Firebase App Check debug token: <uuid>`, and the SDK stores it in IndexedDB, so reloads reuse the same one.
@@ -40,6 +43,6 @@ The app reads its Firebase, reCAPTCHA Enterprise, and catalog endpoint settings 
 - [React 19](https://react.dev) with TypeScript
 - [Vite](https://vite.dev)
 - [Chakra UI 3](https://chakra-ui.com) for components and theming
-- [Firebase](https://firebase.google.com) (App Check) to protect the catalog endpoint
+- [Firebase](https://firebase.google.com) — App Check to protect the catalog endpoint, Analytics for usage measurement
 - [Axios](https://axios-http.com) for catalog requests
 - Also: `@lobehub/icons`, `react-icons`
