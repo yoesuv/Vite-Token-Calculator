@@ -9,6 +9,7 @@ import {
   LuWallet,
   LuCalculator,
   LuSlidersHorizontal,
+  LuPencil,
   LuX,
 } from "react-icons/lu";
 
@@ -52,3 +53,4 @@ export const SearchIcon = glyph(LuSearch);
 export const CheckIcon = glyph(LuCheck);
 export const InfoIcon = glyph(LuInfo);
 export const XIcon = glyph(LuX);
+export const PencilIcon = glyph(LuPencil);

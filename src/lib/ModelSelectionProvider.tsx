@@ -12,7 +12,13 @@ import {
 } from 'react'
 import { describeError, fetchAiModels } from './models'
 import { MAX_SELECTED, sortForDisplay, toCatalogModels, type CatalogModel } from './modelCatalog'
-import { persistRates, readPersistedRates, type ExchangeRates } from './pricing'
+import {
+  persistRates,
+  readPersistedRates,
+  type ExchangeRates,
+  type PriceKind,
+  type PriceOverrideMap,
+} from './pricing'
 import { ModelSelectionContext, type ModelSelection, type SelectionStatus } from './useModelSelection'
 
 /** Slot-order selection plus the limit notice, mutated only through the reducer. */
@@ -104,7 +110,10 @@ function selectionReducer(
 }
 
 export function ModelSelectionProvider({ children }: { children: ReactNode }) {
-  const [models, setModels] = useState<CatalogModel[]>([])
+  const [catalog, setCatalog] = useState<CatalogModel[]>([])
+  // Session-only price edits from the info popover. In-memory on purpose: a page
+  // refresh discards them and the API prices come back.
+  const [priceOverrides, setPriceOverrides] = useState<PriceOverrideMap>({})
   // Seeded from the last successful load so the first paint already prices in
   // the catalog's own FX rate instead of the registry default (see pricing.ts).
   const [rates, setRates] = useState<ExchangeRates>(readPersistedRates)
@@ -130,7 +139,7 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
         // the first card in the picker grid.
         const primaryId = next.length > 0 ? next[0].id : ''
         const nextIds = new Set(next.map((model) => model.id))
-        setModels(next)
+        setCatalog(next)
         // An empty table means this response published no usable `currency`, so
         // keep what is already in hand (cache, then registry default) rather than
         // regressing to the assumed rate on every reload.
@@ -167,6 +176,18 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer)
   }, [limitAlertKey])
 
+  // Overrides are merged here, once, so the picker, the slots, and the coverage
+  // math all read the same prices. Only the three price columns change. Declared
+  // before the callbacks below, which read `models`.
+  const models = useMemo(
+    () =>
+      catalog.map((model) => {
+        const overrides = priceOverrides[model.id]
+        return overrides ? { ...model, ...overrides } : model
+      }),
+    [catalog, priceOverrides],
+  )
+
   /** Remove a model and stand down the notice — a slot just freed up. */
   const deselect = useCallback((id: string) => {
     dispatch({ type: 'remove', id })
@@ -191,6 +212,13 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
     // Initial state is already 'loading'; retries re-set it here (event handler, not effect).
     setStatus('loading')
     setReloadKey((key) => key + 1)
+  }, [])
+
+  const setPriceOverride = useCallback((id: string, kind: PriceKind, cents: number) => {
+    setPriceOverrides((current) => ({
+      ...current,
+      [id]: { ...current[id], [kind]: cents },
+    }))
   }, [])
 
   const modelById = useMemo(
@@ -220,6 +248,8 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
       removeModel: deselect,
       addFirstAvailable,
       limitAlertKey,
+      setPriceOverride,
+      priceOverrides,
     }),
     [
       models,
@@ -233,6 +263,8 @@ export function ModelSelectionProvider({ children }: { children: ReactNode }) {
       deselect,
       addFirstAvailable,
       limitAlertKey,
+      setPriceOverride,
+      priceOverrides,
     ],
   )
 

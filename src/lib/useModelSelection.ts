@@ -3,7 +3,7 @@
 // Refresh keeps working and eslint's react-refresh rule stays satisfied.
 import { createContext, useContext } from 'react'
 import { type CatalogModel } from './modelCatalog'
-import { type ExchangeRates } from './pricing'
+import { type ExchangeRates, type PriceKind, type PriceOverrideMap } from './pricing'
 
 export type SelectionStatus = 'loading' | 'ready' | 'error'
 
@@ -40,6 +40,17 @@ export type ModelSelection = {
    * boolean so each rejected click restarts the auto-dismiss timer.
    */
   limitAlertKey: number
+  /**
+   * Session-only price overrides, keyed by model id. `models` and
+   * `selectedModels` already have them applied; this map is for the "edited" marker.
+   */
+  priceOverrides: PriceOverrideMap
+  /**
+   * Set one price (US cents per 1M) for a model until page refresh. Overrides
+   * flow into `models` and `selectedModels`, so every price and coverage figure
+   * updates together.
+   */
+  setPriceOverride: (id: string, kind: PriceKind, cents: number) => void
 }
 
 export const ModelSelectionContext = createContext<ModelSelection | null>(null)

@@ -1,7 +1,18 @@
+import { useState } from "react";
 import { Portal, Popover } from "@chakra-ui/react";
-import { InfoIcon } from "../icons";
+import { CheckIcon, InfoIcon, PencilIcon, XIcon } from "../icons";
 import { type CatalogModel } from "../../lib/modelCatalog";
-import { formatPriceInfo, type Fx } from "../../lib/pricing";
+import {
+  centsFromDisplayPrice,
+  currencyConfig,
+  editablePriceText,
+  formatPriceInfo,
+  parsePriceInput,
+  sanitizeBalanceInput,
+  type Fx,
+  type PriceKind,
+} from "../../lib/pricing";
+import { useModelSelection } from "../../lib/useModelSelection";
 import { formatApiTimestamp } from "../../lib/formatDate";
 import { ProviderMark } from "../ProviderMark";
 import "./ModelInfoPopover.css";
@@ -42,11 +53,13 @@ const MODEL_FACTS: {
   value: (model: CatalogModel, fx: Fx) => string;
   /** Returning false drops the row entirely (e.g. an unpublished cutoff). */
   show?: (model: CatalogModel) => boolean;
+  /** Price rows only: the row gets a pencil that opens the inline price editor. */
+  edit?: PriceKind;
 }[] = [
   { key: "provider", label: "Provider", value: (m) => formatProvider(m.provider) },
-  { key: "input", label: "Input · per 1M", value: (m, fx) => formatPriceInfo(m, "input", fx) },
-  { key: "output", label: "Output · per 1M", value: (m, fx) => formatPriceInfo(m, "output", fx) },
-  { key: "cache", label: "Cache read · per 1M", value: (m, fx) => formatPriceInfo(m, "cache", fx) },
+  { key: "input", label: "Input · per 1M", value: (m, fx) => formatPriceInfo(m, "input", fx), edit: "input" },
+  { key: "output", label: "Output · per 1M", value: (m, fx) => formatPriceInfo(m, "output", fx), edit: "output" },
+  { key: "cache", label: "Cache read · per 1M", value: (m, fx) => formatPriceInfo(m, "cache", fx), edit: "cache" },
   { key: "context", label: "Context", value: (m) => formatTokens(m.context) },
   {
     key: "max-output",
@@ -67,6 +80,134 @@ const MODEL_FACTS: {
 ];
 
 /**
+ * Inline editor for one price: a numeric field prefilled with the current price
+ * in the active currency, plus Save/Cancel. Enter saves, Escape cancels. Save is
+ * disabled until the text parses to a non-negative number.
+ */
+function PriceEditor({
+  model,
+  kind,
+  fx,
+  label,
+  onSave,
+  onCancel,
+}: {
+  model: CatalogModel;
+  kind: PriceKind;
+  fx: Fx;
+  label: string;
+  onSave: (cents: number) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState(() => editablePriceText(model, kind, fx));
+  const parsed = parsePriceInput(draft, fx.currency);
+
+  const save = () => {
+    if (parsed === null) return;
+    onSave(centsFromDisplayPrice(parsed, fx));
+  };
+
+  return (
+    <span className="picker-pop-editor">
+      <input
+        className="picker-pop-input"
+        autoFocus
+        inputMode={currencyConfig(fx.currency).inputMode}
+        aria-label={`${label} for ${model.displayName}`}
+        value={draft}
+        onChange={(event) => setDraft(sanitizeBalanceInput(event.target.value, fx.currency))}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            save();
+          } else if (event.key === "Escape") {
+            // Stop here so the popover stays open and only the edit is cancelled.
+            event.stopPropagation();
+            onCancel();
+          }
+        }}
+      />
+      <button
+        type="button"
+        className="picker-pop-edit"
+        aria-label={`Save ${label} for ${model.displayName}`}
+        onClick={save}
+        disabled={parsed === null}
+      >
+        <CheckIcon />
+      </button>
+      <button
+        type="button"
+        className="picker-pop-edit"
+        aria-label={`Cancel editing ${label} for ${model.displayName}`}
+        onClick={onCancel}
+      >
+        <XIcon />
+      </button>
+    </span>
+  );
+}
+
+/**
+ * One price row: the formatted value with a pencil button, or the editor while
+ * this row is the one being edited. A session override shows an "edited" tag.
+ */
+function PriceRow({
+  model,
+  kind,
+  label,
+  fx,
+  editing,
+  onStartEdit,
+  onStopEdit,
+}: {
+  model: CatalogModel;
+  kind: PriceKind;
+  label: string;
+  fx: Fx;
+  editing: boolean;
+  onStartEdit: () => void;
+  onStopEdit: () => void;
+}) {
+  const { priceOverrides, setPriceOverride } = useModelSelection();
+  const edited = priceOverrides[model.id]?.[kind] !== undefined;
+
+  return (
+    <div className="picker-pop-row">
+      <dt>{label}</dt>
+      <dd>
+        {editing ? (
+          <PriceEditor
+            model={model}
+            kind={kind}
+            fx={fx}
+            label={label}
+            onSave={(cents) => {
+              setPriceOverride(model.id, kind, cents);
+              onStopEdit();
+            }}
+            onCancel={onStopEdit}
+          />
+        ) : (
+          <span className="picker-pop-value">
+            {formatPriceInfo(model, kind, fx)}
+            {edited && <span className="picker-pop-edited">edited</span>}
+            <button
+              type="button"
+              className="picker-pop-edit"
+              aria-label={`Edit ${label} for ${model.displayName}`}
+              onClick={onStartEdit}
+            >
+              <PencilIcon />
+            </button>
+          </span>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+/**
  * Per-model info affordance: a round "i" trigger that opens a click popover of
  * the model's published facts. It renders the trigger button *and* the panel,
  * so the caller only drops it into a layout — the picker places it in each
@@ -84,8 +225,23 @@ export function ModelInfoPopover({
   model: CatalogModel;
   fx: Fx;
 }) {
+  // At most one price row is in edit mode at a time.
+  const [editing, setEditing] = useState<PriceKind | null>(null);
+  const { priceOverrides } = useModelSelection();
+  // Wide while editing and also after a save, so the "edited" state keeps the room.
+  const wide = editing !== null || Object.keys(priceOverrides[model.id] ?? {}).length > 0;
+
   return (
-    <Popover.Root positioning={{ placement: "bottom-end" }}>
+    <Popover.Root
+      positioning={{ placement: "bottom-end" }}
+      // While a price is being edited, Escape cancels the edit (handled in the
+      // input) instead of closing the whole panel.
+      closeOnEscape={editing === null}
+      onOpenChange={({ open }) => {
+        // Closing the panel (outside click, trigger) discards an unsaved edit.
+        if (!open) setEditing(null);
+      }}
+    >
       <Popover.Trigger asChild>
         <button
           type="button"
@@ -97,7 +253,7 @@ export function ModelInfoPopover({
       </Popover.Trigger>
       <Portal>
         <Popover.Positioner>
-          <Popover.Content className="picker-pop">
+          <Popover.Content className={`picker-pop ${wide ? "is-editing" : ""}`}>
             <Popover.Arrow>
               <Popover.ArrowTip />
             </Popover.Arrow>
@@ -115,12 +271,24 @@ export function ModelInfoPopover({
               </div>
               <dl className="picker-pop-rows">
                 {MODEL_FACTS.filter((fact) => !fact.show || fact.show(model)).map(
-                  (fact) => (
-                    <div className="picker-pop-row" key={fact.key}>
-                      <dt>{fact.label}</dt>
-                      <dd>{fact.value(model, fx)}</dd>
-                    </div>
-                  ),
+                  (fact) =>
+                    fact.edit ? (
+                      <PriceRow
+                        key={fact.key}
+                        model={model}
+                        kind={fact.edit}
+                        label={fact.label}
+                        fx={fx}
+                        editing={editing === fact.edit}
+                        onStartEdit={() => setEditing(fact.edit ?? null)}
+                        onStopEdit={() => setEditing(null)}
+                      />
+                    ) : (
+                      <div className="picker-pop-row" key={fact.key}>
+                        <dt>{fact.label}</dt>
+                        <dd>{fact.value(model, fx)}</dd>
+                      </div>
+                    ),
                 )}
               </dl>
             </Popover.Body>

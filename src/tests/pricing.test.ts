@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   blendedPricePerMillionUSD,
+  centsFromDisplayPrice,
   convertBalance,
+  editablePriceText,
+  parsePriceInput,
   coverageTokens,
   DEFAULT_USAGE_MIX,
   EMPTY_RATES,
@@ -199,5 +202,34 @@ describe('formatPriceInfo', () => {
 
   it('shows free for a published zero', () => {
     expect(formatPriceInfo({ input: 0 }, 'input', usdFx)).toBe('$0.00')
+  })
+})
+
+describe('price override helpers', () => {
+  const idrFx = makeFx('IDR', { IDR: 15000 })
+
+  it('round-trips a display price back to the same cents', () => {
+    // 1000 cents = $10 per 1M; at 15000 IDR that displays as Rp 150.000.
+    const shown = pricePerMillionUSD({ input: 1000 }, 'input') * ratePerUSD(idrFx)
+    expect(centsFromDisplayPrice(shown, idrFx)).toBeCloseTo(1000, 6)
+    expect(centsFromDisplayPrice(150000, idrFx)).toBeCloseTo(1000, 6)
+  })
+
+  it('converts USD input to cents directly', () => {
+    expect(centsFromDisplayPrice(2.5, usdFx)).toBe(250)
+  })
+
+  it('parses locale-formatted input and rejects bad values', () => {
+    expect(parsePriceInput('150.000', 'IDR')).toBe(150000)
+    expect(parsePriceInput('2.50', 'USD')).toBe(2.5)
+    expect(parsePriceInput('0', 'USD')).toBe(0)
+    expect(parsePriceInput('', 'USD')).toBeNull()
+    expect(parsePriceInput('-1', 'USD')).toBeNull()
+  })
+
+  it('prefills the current price in the active currency, empty when unpublished', () => {
+    expect(editablePriceText({ input: 1000 }, 'input', idrFx)).toBe('150000')
+    expect(editablePriceText({ input: 200 }, 'input', usdFx)).toBe('2')
+    expect(editablePriceText({ input: 200 }, 'cache', usdFx)).toBe('')
   })
 })

@@ -366,6 +366,53 @@ export const formatPriceInfo = (
   return published ? formatMoney(pricePerMillion(model, kind, fx), fx.currency) : PRICE_UNAVAILABLE
 }
 
+/**
+ * Session-only price overrides for one model, in US cents per 1M tokens, keyed
+ * by the same field names the catalog uses. Never persisted: a refresh drops
+ * them and the API prices come back.
+ */
+export type PriceOverrides = Partial<Record<PriceKind, number>>
+
+/** Overrides keyed by catalog model id. */
+export type PriceOverrideMap = Record<string, PriceOverrides>
+
+/**
+ * Inverse of `pricePerMillion`: a per-1M figure in the active currency becomes
+ * US cents per 1M at the same rate the display uses, so typing back the number
+ * on screen returns the same price. Rounded to 1e-6 cents to drop float noise.
+ */
+export const centsFromDisplayPrice = (perMillion: number, fx: Fx): number =>
+  Math.round((perMillion / ratePerUSD(fx)) * 100 * 1e6) / 1e6
+
+/**
+ * Parse a price typed into the editor. Uses the same locale rules as the balance
+ * input. Returns `null` for empty, malformed, or negative input, so the caller
+ * can refuse to save. `0` is a valid (free) price.
+ */
+export const parsePriceInput = (raw: string, currency: Currency): number | null => {
+  const sanitized = sanitizeBalanceInput(raw, currency)
+  if (sanitized === '') return null
+  const value = Number(sanitized)
+  return Number.isFinite(value) && value >= 0 ? value : null
+}
+
+/**
+ * Text used to prefill the price editor: the current per-1M price in the active
+ * currency, without grouping, at the currency's fraction digits. An unpublished
+ * price (e.g. no cache rate) prefills empty, because the editor must not invent
+ * a starting value.
+ */
+export const editablePriceText = (model: PricedModel, kind: PriceKind, fx: Fx): string => {
+  const cents = model[kind]
+  const published = typeof cents === 'number' && Number.isFinite(cents) && cents >= 0
+  if (!published) return ''
+  return new Intl.NumberFormat(currencyConfig(fx.currency).locale, {
+    useGrouping: false,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: currencyConfig(fx.currency).maxDecimals,
+  }).format(pricePerMillion(model, kind, fx))
+}
+
 /** Format a raw balance string for display when the field is not focused. */
 export const formatBalanceForDisplay = (balance: string, currency: Currency): string =>
   numberFormatter(currency).format(Number(balance) || 0)

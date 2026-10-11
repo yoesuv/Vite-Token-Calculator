@@ -1,30 +1,268 @@
 /* Info trigger button. It sits inside the picker card's .picker-model-actions
    cluster (owned by ModelPickerSection.css); only the button's own look lives
    here so the popover component is self-contained. */
-.picker-info { display: grid; flex: 0 0 auto; width: 24px; height: 24px; place-items: center; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 50%; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg-muted); cursor: pointer; transition: color .15s ease, border-color .15s ease; }
-.picker-info svg { width: 14px; height: 14px; }
-.picker-info:hover { color: var(--chakra-colors-accent); border-color: var(--chakra-colors-accent); }
+.picker-info {
+  display: grid;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 50%;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.picker-info svg {
+  width: 14px;
+  height: 14px;
+}
+.picker-info:hover {
+  color: var(--chakra-colors-accent);
+  border-color: var(--chakra-colors-accent);
+}
 /* The outline is the forced-colors-safe channel: box-shadow alone is dropped
    in forced-colors mode (Windows High Contrast), so the halo stays as a light
    decoration while the real indicator rides the outline. */
-.picker-info:focus-visible { outline: 2px solid var(--chakra-colors-accent); outline-offset: 2px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent); }
-.dark .picker-info { background: var(--chakra-colors-bg-subtle); }
+.picker-info:focus-visible {
+  outline: 2px solid var(--chakra-colors-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--chakra-colors-accent) 22%, transparent);
+}
+.dark .picker-info {
+  background: var(--chakra-colors-bg-subtle);
+}
 
 /* Info popover panel: fixed width so prices/dates don't jitter. */
-.picker-pop { width: 300px; max-width: calc(100vw - 32px); }
-.picker-pop-head { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid var(--chakra-colors-border-subtle); }
-.picker-pop-head .provider-mark { flex: 0 0 34px; width: 34px; height: 34px; }
-.picker-pop-title { display: flex; flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 3px; }
+.picker-pop {
+  width: 310px;
+  max-width: calc(100vw - 32px);
+  /* The panel is wider while a price is being edited (`.is-editing` below) and
+     also stays wide once an override exists, so the switch is a state change the
+     user watches. Glide it instead of snapping.
+
+     Expo-out, deliberately: the curve spends most of its travel in the first
+     ~3 frames, which is what carries the row out of the cramped 310px layout
+     (the editor would otherwise sit wrapped for a visible moment), and it
+     arrives with near-zero velocity, which is what hides the positioner's
+     catch-up — the floating positioner tracks our right edge one frame behind
+     the width change, so a flat arrival keeps that correction sub-pixel. */
+  transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Widen while a price is being edited so the inline editor has room. */
+.picker-pop.is-editing {
+  width: 350px;
+}
+.picker-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--chakra-colors-border-subtle);
+}
+.picker-pop-head .provider-mark {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+}
+.picker-pop-title {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
 /* Only the display name truncates; the full API name must read in full. */
-.picker-pop-title strong { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.picker-pop-title strong { color: var(--chakra-colors-fg-heading); font-size: 14px; font-weight: 600; }
+.picker-pop-title strong {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--chakra-colors-fg-heading);
+  font-size: 14px;
+  font-weight: 600;
+}
 /* Full name (e.g. moonshotai/kimi-k3) is never ellipsized: wrap onto as many
    lines as needed and break long unspaced slugs so nothing is clipped. */
-.picker-pop-title small { display: block; color: var(--chakra-colors-fg-subtle); font-size: 12px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-.picker-pop-rows { display: flex; flex-direction: column; gap: 6px; margin: 0; }
-.picker-pop-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.picker-pop-title small {
+  display: block;
+  color: var(--chakra-colors-fg-subtle);
+  font-size: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.picker-pop-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.picker-pop-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
 /* Provider slugs are raw, unspaced API tokens (e.g. `moonshotai`), and the panel
    is fixed-width, so a long one would push the row past the panel edge. Let both
    cells shrink and break like `.picker-pop-title small` above so nothing overflows. */
-.picker-pop-row dt { min-width: 0; overflow-wrap: anywhere; word-break: break-word; color: var(--chakra-colors-fg-subtle); font-family: var(--chakra-fonts-mono); font-size: 11px; }
-.picker-pop-row dd { min-width: 0; overflow-wrap: anywhere; word-break: break-word; margin: 0; color: var(--chakra-colors-fg); font-size: 12.5px; text-align: right; }
+.picker-pop-row dt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  color: var(--chakra-colors-fg-subtle);
+  font-family: var(--chakra-fonts-mono);
+  font-size: 11px;
+}
+.picker-pop-row dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  margin: 0;
+  color: var(--chakra-colors-fg);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+/* Price rows: value + pencil on one line, or the inline editor while editing.
+   The dd is right-aligned like the other rows, so the editor sits at the edge. */
+.picker-pop-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.picker-pop-edit {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--chakra-colors-fg-muted);
+  cursor: pointer;
+}
+.picker-pop-edit svg {
+  width: 12px;
+  height: 12px;
+}
+.picker-pop-edit:hover:not(:disabled) {
+  color: var(--chakra-colors-accent);
+}
+.picker-pop-edit:focus-visible {
+  outline: 2px solid var(--chakra-colors-accent);
+  outline-offset: 1px;
+}
+/* Save stays disabled until the text parses, so the dimming it used to get from
+   `.picker-pop-btn:disabled` is carried over here — an icon-only control needs
+   that state to be visible. */
+.picker-pop-edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Marks a value that is a session override, not the API price. */
+.picker-pop-edited {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chakra-colors-accent) 15%, transparent);
+  color: var(--chakra-colors-accent);
+  font-size: 10px;
+  line-height: 16px;
+  /* Pops in on Save, so the override registers as a change. Runs again when an
+     already-edited model is opened, under the panel's own fade — invisible. */
+  animation: picker-pop-edited-in 0.16s ease-out;
+}
+@keyframes picker-pop-edited-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.picker-pop-editor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
+  /* The editor only ever mounts on a click, so this reads as feedback rather
+     than as part of the panel's own open animation. Slides down into the space
+     the widening panel is making, timed to the width glide above. */
+  animation: picker-pop-editor-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes picker-pop-editor-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.picker-pop-input {
+  width: 84px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 4px;
+  background: var(--chakra-colors-bg);
+  color: var(--chakra-colors-fg);
+  font-size: 12.5px;
+  text-align: right;
+}
+.picker-pop-input:focus-visible {
+  outline: 2px solid var(--chakra-colors-accent);
+  outline-offset: 0;
+}
+.picker-pop-btn {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 4px;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.picker-pop-btn:hover:not(:disabled) {
+  border-color: var(--chakra-colors-accent);
+  color: var(--chakra-colors-accent);
+}
+/* Same outline channel as `.picker-pop-edit`/`.picker-pop-input` above: the ring
+   is the accent color normally and the system Highlight under forced colors. */
+.picker-pop-btn:focus-visible {
+  outline: 2px solid var(--chakra-colors-accent);
+  outline-offset: 1px;
+}
+.picker-pop-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Last in the file on purpose: same specificity as the rules above, so the
+   later position is what wins without `!important`. The width and the two
+   entrance animations all drop to their final state instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .picker-pop {
+    transition: none;
+  }
+  .picker-pop-editor,
+  .picker-pop-edited {
+    animation: none;
+  }
+}
