@@ -44,6 +44,19 @@
 .picker-alert svg { flex: 0 0 auto; width: 16px; height: 16px; color: var(--chakra-colors-accent); }
 .dark .picker-alert { background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-bg-panel)); }
 @media (prefers-reduced-motion: reduce) { .picker-alert-region,.picker-alert,.picker-alert-region.is-visible .picker-alert { transition: none; } }
+/* Utility: Screen-reader only (visually hidden but accessible) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 /* Controls Row: Filter + Search */
 .picker-controls-row {
   display: flex;

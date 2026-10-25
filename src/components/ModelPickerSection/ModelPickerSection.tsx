@@ -150,9 +150,11 @@ export function ModelPickerSection({
       <div className="picker-controls-row">
         {/* Filter Dropdown (Left) */}
         <div className="picker-filter-wrapper">
-          <VisuallyHidden as="label" htmlFor="model-sort">
+          {/* Plain <label> avoids Chakra polymorphic type issues with htmlFor.
+              sr-only visually hides it while keeping it accessible to screen readers. */}
+          <label htmlFor="model-sort" className="sr-only">
             Sort models
-          </VisuallyHidden>
+          </label>
           {/* Dynamic Icon: Changes based on selected sort option */}
           {sortOption === "default" && <DefaultSortIcon aria-hidden="true" />}
           {sortOption === "newest" && <NewestSortIcon aria-hidden="true" />}
