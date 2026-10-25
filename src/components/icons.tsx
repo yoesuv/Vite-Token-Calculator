@@ -1,7 +1,11 @@
 import { Icon, type IconProps } from "@chakra-ui/react";
 import {
+  LuCalendarArrowDown,
+  LuCalendarArrowUp,
   LuCheck,
+  LuChevronDown,
   LuInfo,
+  LuListOrdered,
   LuMoon,
   LuPlus,
   LuSearch,
@@ -54,3 +58,7 @@ export const CheckIcon = glyph(LuCheck);
 export const InfoIcon = glyph(LuInfo);
 export const XIcon = glyph(LuX);
 export const PencilIcon = glyph(LuPencil);
+export const DefaultSortIcon = glyph(LuListOrdered);
+export const NewestSortIcon = glyph(LuCalendarArrowDown);
+export const OldestSortIcon = glyph(LuCalendarArrowUp);
+export const ChevronDownIcon = glyph(LuChevronDown);
