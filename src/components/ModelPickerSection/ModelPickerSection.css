@@ -44,15 +44,141 @@
 .picker-alert svg { flex: 0 0 auto; width: 16px; height: 16px; color: var(--chakra-colors-accent); }
 .dark .picker-alert { background: color-mix(in srgb, var(--chakra-colors-accent) 14%, var(--chakra-colors-bg-panel)); }
 @media (prefers-reduced-motion: reduce) { .picker-alert-region,.picker-alert,.picker-alert-region.is-visible .picker-alert { transition: none; } }
-.picker-search { display: flex; height: 52px; align-items: center; gap: 12px; margin-top: 20px; padding: 0 16px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 10px; color: var(--chakra-colors-fg-muted); }
-.picker-search svg { width: 20px; height: 20px; }
-.picker-search > svg { flex: 0 0 20px; }
-.picker-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--chakra-colors-fg); font: inherit; font-size: 16px; }
-.picker-search:has(input:focus-visible) { border-color: var(--chakra-colors-accent); outline: 2px solid var(--chakra-colors-accent); outline-offset: 2px; }
-.picker-search input::placeholder { color: var(--chakra-colors-fg-subtle); }
-.picker-search input::-webkit-search-cancel-button { display: none; }
-.picker-search button { display: grid; place-items: center; border: 0; background: transparent; color: var(--chakra-colors-fg-muted); cursor: pointer; }
-.picker-search button svg { width: 18px; height: 18px; }
+/* Controls Row: Filter + Search */
+.picker-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Filter Wrapper */
+.picker-filter-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 12px 0 12px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 10px;
+  background: var(--chakra-colors-bg-panel);
+  color: var(--chakra-colors-fg-muted);
+  transition: border-color .15s ease, box-shadow .15s ease;
+  min-width: 180px; /* Ensure enough space for text */
+}
+
+.picker-filter-wrapper:hover {
+  border-color: var(--chakra-colors-accent);
+}
+
+.picker-filter-wrapper:focus-within {
+  border-color: var(--chakra-colors-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chakra-colors-accent) 20%, transparent);
+}
+
+/* Left Icon (Sort) - Targets the first SVG which is the dynamic sort icon */
+.picker-filter-wrapper > svg:first-of-type {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 12px; /* Increased spacing between icon and text */
+  color: var(--chakra-colors-fg-subtle);
+}
+
+/* Right Icon (Chevron) */
+.picker-filter-wrapper > svg:last-child {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  color: var(--chakra-colors-fg-subtle);
+}
+
+/* Sort Select Styling */
+.picker-sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 100%;
+  padding: 0 24px 0 0; /* Right padding for chevron clearance */
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--chakra-colors-fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Hide native arrow in Firefox if any remains */
+.picker-sort-select::-moz-focus-inner {
+  border-style: none;
+}
+
+/* Search Input Container (Flex Grow) */
+.picker-search {
+  display: flex;
+  flex: 1;
+  min-width: 0; /* Prevent overflow in flex containers */
+  height: 52px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--chakra-colors-border-subtle);
+  border-radius: 10px;
+  color: var(--chakra-colors-fg-muted);
+  background: var(--chakra-colors-bg-panel);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.picker-search svg {
+  width: 20px;
+  height: 20px;
+}
+
+.picker-search > svg {
+  flex: 0 0 20px;
+}
+
+.picker-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--chakra-colors-fg);
+  font: inherit;
+  font-size: 16px;
+}
+
+.picker-search:has(input:focus-visible) {
+  border-color: var(--chakra-colors-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chakra-colors-accent) 20%, transparent);
+}
+
+.picker-search input::placeholder {
+  color: var(--chakra-colors-fg-subtle);
+}
+
+.picker-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.picker-search button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--chakra-colors-fg-muted);
+  cursor: pointer;
+}
+
+.picker-search button svg {
+  width: 18px;
+  height: 18px;
+}
 .picker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
 .picker-model { position: relative; display: flex; width: 100%; min-width: 0; min-height: 62px; align-items: center; gap: 12px; padding: 7px 62px 7px 12px; border: 1px solid var(--chakra-colors-border-subtle); border-radius: 11px; background: var(--chakra-colors-bg-panel); color: var(--chakra-colors-fg); text-align: left; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
 .picker-model:hover { border-color: var(--chakra-colors-accent); background: var(--chakra-colors-bg-subtle); }
@@ -82,6 +208,9 @@
   .picker-intro { align-items: flex-start; flex-direction: column; }
   .picker-heading { flex: initial; min-width: 0; }
   .picker-slots { width: 100%; flex-basis: auto; max-width: none; }
+  .picker-controls-row { flex-wrap: wrap; }
+  .picker-filter-wrapper { width: 100%; min-width: unset; }
+  .picker-search { width: 100%; }
   .picker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
@@ -89,9 +218,17 @@
   .picker-description { font-size: 13px; }
   .picker-slots { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); width: 100%; }
   .picker-slot { height: 50px; padding: 6px; gap: 6px; }
-.picker-slot-empty { font-size: 10px; }  .picker-slot .provider-mark,.picker-plus { flex-basis: 30px; width: 30px; height: 30px; }
+  .picker-slot-empty { font-size: 10px; }
+  .picker-slot .provider-mark, .picker-plus { flex-basis: 30px; width: 30px; height: 30px; }
   .picker-slot-copy strong { font-size: 11px; }
   .picker-slot-copy small { font-size: 9px; }
+  .picker-controls-row { flex-direction: column; align-items: stretch; }
+  .picker-filter-wrapper { width: 100%; height: 48px; }
+  .picker-filter-wrapper > svg:first-child { width: 16px; height: 16px; }
+  .picker-filter-wrapper > svg:last-child { right: 10px; width: 14px; height: 14px; }
+  .picker-sort-select { font-size: 13px; }
+  .picker-search { height: 48px; }
+  .picker-search input { font-size: 14px; }
   .picker-grid { grid-template-columns: 1fr; }
   .picker-model { min-height: 68px; gap: 10px; padding: 8px 62px 8px 8px; }
   .picker-skeleton { min-height: 68px; }

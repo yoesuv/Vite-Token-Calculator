@@ -245,3 +245,42 @@ export const toCatalogModels = (models: ApiModel[]): CatalogModel[] =>
  */
 export const sortForDisplay = (models: CatalogModel[]): CatalogModel[] =>
   [...models].sort((a, b) => a.fullName.localeCompare(b.fullName))
+
+/** Picker sort modes. `default` preserves {@link sortForDisplay}'s ordering. */
+export type SortOption = "default" | "newest" | "oldest"
+
+/**
+ * Re-order the filtered catalog by release date.
+ *
+ * `null` releases always sink to the end regardless of direction: a model with
+ * no known release date has no meaningful temporal position, and mixing it into
+ * either extreme would imply precision the data does not have. Among themselves,
+ * null-releases keep their prior (alphabetical) order via a stable comparator
+ * returning 0.
+ *
+ * Non-null releases compare on `_seconds`; ties fall back to `_nanoseconds`
+ * because Firestore timestamps carry sub-second precision that would otherwise
+ * be lost. The input array is assumed to already be in display order (the
+ * caller applies {@link sortForDisplay} upstream), so this function only needs
+ * to reorder — it never re-derives the default case.
+ */
+export const sortByRelease = (
+  models: CatalogModel[],
+  option: SortOption,
+): CatalogModel[] => {
+  if (option === "default") return models
+
+  const sign = option === "newest" ? -1 : 1
+
+  return [...models].sort((a, b) => {
+    // Nulls go last in both directions; among nulls, preserve incoming order.
+    if (!a.released && !b.released) return 0
+    if (!a.released) return 1
+    if (!b.released) return -1
+
+    const secDiff = a.released._seconds - b.released._seconds
+    if (secDiff !== 0) return sign * secDiff
+
+    return sign * (a.released._nanoseconds - b.released._nanoseconds)
+  })
+}

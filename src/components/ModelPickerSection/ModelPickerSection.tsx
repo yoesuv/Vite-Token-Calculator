@@ -1,7 +1,22 @@
 import { useMemo, useState } from "react";
 import { Box, Skeleton, Text, VisuallyHidden } from "@chakra-ui/react";
-import { CheckIcon, InfoIcon, PlusIcon, SearchIcon, XIcon } from "../icons";
-import { MAX_SELECTED, type CatalogModel } from "../../lib/modelCatalog";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  DefaultSortIcon,
+  InfoIcon,
+  NewestSortIcon,
+  OldestSortIcon,
+  PlusIcon,
+  SearchIcon,
+  XIcon,
+} from "../icons";
+import {
+  MAX_SELECTED,
+  sortByRelease,
+  type CatalogModel,
+  type SortOption,
+} from "../../lib/modelCatalog";
 import { makeFx, type Fx } from "../../lib/pricing";
 import { useModelSelection } from "../../lib/useModelSelection";
 import { ProviderMark } from "../ProviderMark";
@@ -38,17 +53,24 @@ export function ModelPickerSection({
     addFirstAvailable,
     limitAlertKey,
   } = useModelSelection();
-  // Search text is local to this view; it is not part of the shared selection.
+  // Search text and sort mode are local to this view; neither is part of the
+  // shared selection state in <ModelSelectionProvider>.
   const [query, setQuery] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("default");
 
   const visibleModels = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return models.filter((model) =>
+
+    // 1. Filter by search text
+    const filtered = models.filter((model) =>
       `${model.displayName} ${model.fullName} ${model.provider}`
         .toLowerCase()
         .includes(normalizedQuery),
     );
-  }, [models, query]);
+
+    // 2. Apply sort order (default preserves incoming alphabetical order)
+    return sortByRelease(filtered, sortOption);
+  }, [models, query, sortOption]);
 
   return (
     <Box
@@ -125,25 +147,51 @@ export function ModelPickerSection({
       <VisuallyHidden role="alert" aria-atomic="true">
         {limitAlertKey > 0 && <span key={limitAlertKey}>{LIMIT_NOTICE}</span>}
       </VisuallyHidden>
-      <label className="picker-search">
-        <SearchIcon aria-hidden="true" />
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search models"
-          aria-label="Search models"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Clear search"
+      <div className="picker-controls-row">
+        {/* Filter Dropdown (Left) */}
+        <div className="picker-filter-wrapper">
+          <VisuallyHidden as="label" htmlFor="model-sort">
+            Sort models
+          </VisuallyHidden>
+          {/* Dynamic Icon: Changes based on selected sort option */}
+          {sortOption === "default" && <DefaultSortIcon aria-hidden="true" />}
+          {sortOption === "newest" && <NewestSortIcon aria-hidden="true" />}
+          {sortOption === "oldest" && <OldestSortIcon aria-hidden="true" />}
+          
+          <select
+            id="model-sort"
+            className="picker-sort-select"
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as SortOption)}
           >
-            <XIcon />
-          </button>
-        )}
-      </label>
+            <option value="default">Default Order</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+          <ChevronDownIcon aria-hidden="true" />
+        </div>
+
+        {/* Search Input (Right) */}
+        <label className="picker-search">
+          <SearchIcon aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search models"
+            aria-label="Search models"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+            >
+              <XIcon />
+            </button>
+          )}
+        </label>
+      </div>
       <div className="picker-grid" role="list" aria-label="Available models">
         {status === "loading" && (
           <>
