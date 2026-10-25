@@ -228,7 +228,7 @@
   .picker-filter-wrapper > svg:last-child { right: 10px; width: 14px; height: 14px; }
   .picker-sort-select { font-size: 13px; }
   .picker-search { height: 48px; }
-  .picker-search input { font-size: 14px; }
+  .picker-search input { font-size: 16px; }
   .picker-grid { grid-template-columns: 1fr; }
   .picker-model { min-height: 68px; gap: 10px; padding: 8px 62px 8px 8px; }
   .picker-skeleton { min-height: 68px; }
