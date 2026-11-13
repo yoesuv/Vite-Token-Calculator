@@ -30,16 +30,23 @@ const formatProvider = (provider: string): string =>
   provider.charAt(0).toUpperCase() + provider.slice(1);
 
 /**
- * ["text","image"] -> "Text, Image". Defensive because `modalities` is a raw
- * API field that `validateCatalogRows` never checks: a row missing it (or with
- * non-string entries) must show "—", not throw. An empty list also reads as
- * unknown, not free.
+ * ["text","image"] -> "Image, Text". The API publishes modalities in provider
+ * order (usually `text` first), so they are sorted ASC to keep the row stable
+ * across models. Sorting is case-insensitive on the raw value, before display
+ * casing, so `Text` and `text` land in the same place.
+ *
+ * Defensive because `modalities` is a raw API field that `validateCatalogRows`
+ * never checks: a row missing it (or with non-string entries) must show "—",
+ * not throw. An empty list also reads as unknown, not free.
  */
 const formatModalities = (modalities: string[] | null | undefined): string =>
   Array.isArray(modalities) &&
   modalities.length > 0 &&
   modalities.every((m) => typeof m === "string")
-    ? modalities.map((m) => m.charAt(0).toUpperCase() + m.slice(1)).join(", ")
+    ? [...modalities]
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+        .map((m) => m.charAt(0).toUpperCase() + m.slice(1))
+        .join(", ")
     : "—";
 
 /**
