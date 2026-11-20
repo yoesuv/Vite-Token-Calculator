@@ -185,6 +185,46 @@
 /* "Unlimited" is nine glyphs: at 30px it is wider than the 180px minimum slot
    (114px of panel content), so the word drops a step and tracks tighter. */
 .coverage-value.is-unlimited { font-size: 21px; letter-spacing: -0.3px; }
+/* Comparison meter: the line alone, no percentage. The fill is the brand accent,
+   which is already the coverage figure's colour, so number and line read as one
+   measurement; the track is a wash of the same accent so even an almost-empty
+   meter looks like a measurement, not a hairline divider. 2px and square-ended
+   matches the blueprint idiom here (sharp corners, thin rules). */
+.coverage-ratio {
+  position: relative;
+  height: 2px;
+  margin-top: 11px;
+  /* A 20% accent wash (not the flat `border` token), so an almost-empty meter
+     still reads as the same brand measurement as its fill — and never as a
+     plain rule — in either theme. */
+  background: color-mix(in srgb, var(--chakra-colors-accent) 20%, transparent);
+}
+.coverage-ratio-fill {
+  width: var(--coverage-ratio);
+  height: 100%;
+  background: var(--chakra-colors-accent);
+  transition: width 160ms ease;
+}
+/* Unknown price: no fill at all, and a dashed rule instead of a solid track, so
+   "not measured" never looks like "measured at zero" (the case coverageTokens'
+   0 guard is documented against). */
+.coverage-ratio.is-unknown {
+  height: 0;
+  border-top: 1px dashed var(--chakra-colors-border);
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .coverage-ratio-fill { transition: none; }
+}
+/* Windows High Contrast drops background colours, which would erase both the
+   track and the fill; force system colours so the line and its extent survive —
+   including the `color-mix` track, which is overridden by these declarations. */
+@media (forced-colors: active) {
+  .coverage-ratio { background: CanvasText; }
+  .coverage-ratio-fill { background: Highlight; }
+  .coverage-ratio.is-unknown { border-top-color: GrayText; }
+}
+
 /* Two published rates: the block owns the top spacing so the rows stay tight. */
 .price-block { display: grid; gap: 3px; margin-top: 12px; }
 /* Long localized rates (e.g. `Rp 150.000 / 1M`) can exceed a ~180px slot next to
@@ -207,7 +247,7 @@
 /* Catalog still loading: skeleton cards mirror the filled slot's blocks so the
    row height does not jump when the API responds. */
 .slot-skeleton-name { margin-top: 16px; }
-.slot-skeleton-panel { margin-top: 16px; min-height: 82px; }
+.slot-skeleton-panel { margin-top: 16px; min-height: 95px; }
 
 /* Catalog failed: one full-width panel instead of empty slots. */
 .slot-state { display: flex; grid-column: 1 / -1; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; color: var(--chakra-colors-fg-muted); font-size: 13px; text-align: center; }

@@ -3,6 +3,8 @@ import {
   blendedPricePerMillionUSD,
   centsFromDisplayPrice,
   convertBalance,
+  coverageBaselineTokens,
+  coverageRatioPercent,
   editablePriceText,
   parsePriceInput,
   coverageTokens,
@@ -20,6 +22,9 @@ const usdFx = makeFx('USD')
 
 /** Normal, paid model: $2 input, $1 output per 1M. */
 const paidModel = { input: 200, output: 100 }
+
+/** Half the blend of paidModel ($0.30 vs $0.60 per 1M), so it buys 2x tokens. */
+const halfPriceModel = { input: 100, output: 50 }
 
 /** Free model: all rates are published as 0. */
 const freeModel = { input: 0, output: 0, cache: 0 }
@@ -139,6 +144,71 @@ describe('coverageTokens', () => {
   it('computes a normal coverage figure', () => {
     // $100 at $0.60 per 1M -> 166_666_666 tokens
     expect(coverageTokens(100, paidModel, usdFx, DEFAULT_USAGE_MIX)).toBe(166_666_666)
+  })
+})
+
+describe('coverageBaselineTokens', () => {
+  it('returns null for fewer than two comparable slots', () => {
+    expect(coverageBaselineTokens(100, [], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
+    expect(coverageBaselineTokens(100, [paidModel], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
+    // A free and an unpriced slot are both incomparable, so one paid row is left.
+    expect(coverageBaselineTokens(100, [paidModel, freeModel, {}], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
+  })
+
+  it('is the largest finite coverage in the row', () => {
+    expect(coverageBaselineTokens(100, [paidModel, halfPriceModel], usdFx, DEFAULT_USAGE_MIX))
+      .toBe(coverageTokens(100, halfPriceModel, usdFx, DEFAULT_USAGE_MIX))
+  })
+
+  it('excludes unlimited and unpriced slots but keeps the paid pair', () => {
+    expect(coverageBaselineTokens(100, [freeModel, paidModel, {}, halfPriceModel], usdFx, DEFAULT_USAGE_MIX))
+      .toBe(333_333_333)
+  })
+
+  it('is a real 0 when the balance buys nothing anywhere', () => {
+    expect(coverageBaselineTokens(0, [paidModel, halfPriceModel], usdFx, DEFAULT_USAGE_MIX)).toBe(0)
+  })
+
+  it('ranks by converted coverage, so FX does not reorder the row', () => {
+    const idrFx = makeFx('IDR', { IDR: 15000 })
+    expect(coverageBaselineTokens(1_500_000, [paidModel, halfPriceModel], idrFx, DEFAULT_USAGE_MIX))
+      .toBe(coverageTokens(1_500_000, halfPriceModel, idrFx, DEFAULT_USAGE_MIX))
+  })
+})
+
+describe('coverageRatioPercent', () => {
+  it('is 100 for the leader against itself', () => {
+    expect(coverageRatioPercent(333_333_333, 333_333_333)).toBe(100)
+  })
+
+  it('is the linear share of the baseline, with no floor', () => {
+    expect(coverageRatioPercent(166_666_666, 333_333_333)).toBeCloseTo(50, 5)
+    // A thousand-fold gap stays a thousand-fold sliver.
+    expect(coverageRatioPercent(1, 1000)).toBeCloseTo(0.1, 10)
+  })
+
+  it('clamps at 100', () => {
+    expect(coverageRatioPercent(2000, 1000)).toBe(100)
+  })
+
+  it('degrades to 0 instead of NaN or Infinity', () => {
+    expect(coverageRatioPercent(NaN, 1000)).toBe(0)
+    expect(coverageRatioPercent(500, NaN)).toBe(0)
+    expect(coverageRatioPercent(500, Infinity)).toBe(0)
+    expect(coverageRatioPercent(-1, 1000)).toBe(0)
+    // A 0 baseline (nothing affordable) is 0%, never Infinity%.
+    expect(coverageRatioPercent(0, 0)).toBe(0)
+  })
+
+  it('pairs with the baseline so a row always ends on one full line', () => {
+    const balance = 100
+    const models = [paidModel, halfPriceModel]
+    const baseline = coverageBaselineTokens(balance, models, usdFx, DEFAULT_USAGE_MIX) as number
+    const percents = models.map((model) =>
+      coverageRatioPercent(coverageTokens(balance, model, usdFx, DEFAULT_USAGE_MIX), baseline),
+    )
+    expect(percents[1]).toBe(100)
+    expect(percents[0]).toBeLessThan(100)
   })
 })
 
