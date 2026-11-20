@@ -287,7 +287,7 @@ export const isUnlimitedCoverage = (model: PricedModel, mix: UsageMix): boolean 
 
 /**
  * The slot whose coverage sets the meter's full width, or `null` when the row
- * has nothing to compare.
+ * has nothing measurable at all (no slot, or only free/unpriced slots).
  *
  * Only *finite* coverages are on the scale: a free slot (`isUnlimitedCoverage`)
  * buys an unbounded number of tokens, so it cannot be a baseline for a paid one,
@@ -295,12 +295,15 @@ export const isUnlimitedCoverage = (model: PricedModel, mix: UsageMix): boolean 
  * reports 0 for both, which is exactly the coincidence that must not silently
  * rank them together. Both are filtered out here by re-reading the blend rather
  * than the token count, so a model the balance genuinely cannot afford (0
- * tokens, known price) still counts as comparable: a row of unaffordable models
- * has a real baseline of 0, and every meter in it renders empty.
+ * tokens, known price) still counts: a row of unaffordable models has a real
+ * baseline of 0, and every meter in it renders empty.
  *
- * Fewer than two comparable slots returns `null`, not that slot's own coverage:
- * a single paid model would be its own leader and draw a full bar that compares
- * nothing.
+ * A row of one priced slot is its own leader, so it returns that slot's own
+ * coverage and the meter draws a full bar: the line is always there to read, and
+ * 100% means "nothing in this comparison buys more" — which is true, trivially,
+ * for a single model. A slot with a known positive price is therefore never
+ * handed a `null` baseline; only free and unpriced slots can be, and both render
+ * their own meter state regardless.
  */
 export const coverageBaselineTokens = (
   balance: number,
@@ -316,7 +319,7 @@ export const coverageBaselineTokens = (
     const tokens = coverageTokens(balance, model, fx, mix)
     if (Number.isFinite(tokens) && tokens >= 0) comparable.push(tokens)
   }
-  if (comparable.length < 2) return null
+  if (comparable.length === 0) return null
   return Math.max(...comparable)
 }
 

@@ -148,11 +148,18 @@ describe('coverageTokens', () => {
 })
 
 describe('coverageBaselineTokens', () => {
-  it('returns null for fewer than two comparable slots', () => {
+  it('is null only when no slot has a measurable price', () => {
     expect(coverageBaselineTokens(100, [], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
-    expect(coverageBaselineTokens(100, [paidModel], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
-    // A free and an unpriced slot are both incomparable, so one paid row is left.
-    expect(coverageBaselineTokens(100, [paidModel, freeModel, {}], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
+    // A free slot is unbounded and an unpriced one is unknown: neither is a
+    // measurement, so a row of them has no baseline at all.
+    expect(coverageBaselineTokens(100, [freeModel, {}], usdFx, DEFAULT_USAGE_MIX)).toBeNull()
+  })
+
+  it('lets a single priced slot lead itself, so one model still shows a full bar', () => {
+    // The meter used to hide here; the point is the line is always readable, and
+    // 100% truthfully means "nothing in this comparison buys more".
+    expect(coverageBaselineTokens(100, [paidModel], usdFx, DEFAULT_USAGE_MIX))
+      .toBe(coverageTokens(100, paidModel, usdFx, DEFAULT_USAGE_MIX))
   })
 
   it('is the largest finite coverage in the row', () => {
@@ -167,6 +174,8 @@ describe('coverageBaselineTokens', () => {
 
   it('is a real 0 when the balance buys nothing anywhere', () => {
     expect(coverageBaselineTokens(0, [paidModel, halfPriceModel], usdFx, DEFAULT_USAGE_MIX)).toBe(0)
+    // Single slot, unaffordable balance: still measurable, and the bar is empty.
+    expect(coverageBaselineTokens(0, [paidModel], usdFx, DEFAULT_USAGE_MIX)).toBe(0)
   })
 
   it('ranks by converted coverage, so FX does not reorder the row', () => {
@@ -209,6 +218,12 @@ describe('coverageRatioPercent', () => {
     )
     expect(percents[1]).toBe(100)
     expect(percents[0]).toBeLessThan(100)
+  })
+
+  it('is 100 for the only model in the row', () => {
+    const baseline = coverageBaselineTokens(100, [paidModel], usdFx, DEFAULT_USAGE_MIX) as number
+    expect(coverageRatioPercent(coverageTokens(100, paidModel, usdFx, DEFAULT_USAGE_MIX), baseline))
+      .toBe(100)
   })
 })
 

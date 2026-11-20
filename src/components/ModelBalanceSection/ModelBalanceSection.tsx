@@ -73,6 +73,8 @@ export function ModelBalanceSection({
   // The meter's full width is the best coverage in the row, so it is derived
   // from every slot at once — a slot cannot see its neighbours. Not state: it
   // re-derives with the balance, the mix, the FX rate, and each pick or clear.
+  // With one priced slot that slot is its own leader, so the bar is full rather
+  // than hidden.
   const baselineTokens = coverageBaselineTokens(
     calculationBalance,
     selectedModels,
