@@ -285,6 +285,57 @@ export const coverageTokens = (
 export const isUnlimitedCoverage = (model: PricedModel, mix: UsageMix): boolean =>
   isValidUsageMix(mix) && blendedPricePerMillionUSD(model, mix) <= 0
 
+/**
+ * The slot whose coverage sets the meter's full width, or `null` when the row
+ * has nothing to compare.
+ *
+ * Only *finite* coverages are on the scale: a free slot (`isUnlimitedCoverage`)
+ * buys an unbounded number of tokens, so it cannot be a baseline for a paid one,
+ * and an unpublished price (`NaN` blend) is unknown, not zero — `coverageTokens`
+ * reports 0 for both, which is exactly the coincidence that must not silently
+ * rank them together. Both are filtered out here by re-reading the blend rather
+ * than the token count, so a model the balance genuinely cannot afford (0
+ * tokens, known price) still counts as comparable: a row of unaffordable models
+ * has a real baseline of 0, and every meter in it renders empty.
+ *
+ * Fewer than two comparable slots returns `null`, not that slot's own coverage:
+ * a single paid model would be its own leader and draw a full bar that compares
+ * nothing.
+ */
+export const coverageBaselineTokens = (
+  balance: number,
+  models: readonly PricedModel[],
+  fx: Fx,
+  mix: UsageMix,
+): number | null => {
+  const comparable: number[] = []
+  for (const model of models) {
+    const blend = blendedPricePerMillionUSD(model, mix)
+    // `!(blend > 0)` covers 0 (free/unbounded) and NaN (price unavailable).
+    if (!(blend > 0)) continue
+    const tokens = coverageTokens(balance, model, fx, mix)
+    if (Number.isFinite(tokens) && tokens >= 0) comparable.push(tokens)
+  }
+  if (comparable.length < 2) return null
+  return Math.max(...comparable)
+}
+
+/**
+ * One slot's coverage as a percentage (0–100) of `coverageBaselineTokens` — the
+ * width of the comparison meter. Purely linear with no floor: a model 1000×
+ * pricier than the leader draws a 0.1% sliver, because a minimum width would
+ * exaggerate a gap the headline number right above it states exactly.
+ *
+ * A baseline of 0 (no slot affordable) returns 0 for every slot rather than
+ * `NaN`: an empty meter is the honest rendering of "buys nothing", and `NaN%`
+ * in a CSS `width` would drop the fill to its default and read as full.
+ */
+export const coverageRatioPercent = (tokens: number, baselineTokens: number): number => {
+  if (!Number.isFinite(tokens) || tokens < 0) return 0
+  if (!Number.isFinite(baselineTokens) || baselineTokens <= 0) return 0
+  return Math.min(100, (tokens / baselineTokens) * 100)
+}
+
 /** Biggest first, so a count always lands on the smallest suffix under 1000. */
 const TOKEN_SCALES = [
   { limit: 1_000_000_000_000, suffix: 'T', decimals: 0 },

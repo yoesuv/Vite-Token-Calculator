@@ -1,6 +1,8 @@
 import { Box, Button, HStack, Text } from "@chakra-ui/react";
+import { type CSSProperties } from "react";
 import {
   blendedPricePerMillionUSD,
+  coverageRatioPercent,
   coverageTokens,
   formatPriceInfo,
   formatTokenCount,
@@ -16,6 +18,20 @@ import { ProviderMark } from "../ProviderMark";
 const slotLabel = (slot: number) =>
   slot === 0 ? "PRIMARY MODEL" : `COMPARE ${slot}`;
 
+/**
+ * Meter label for assistive tech: the width is the only thing on screen, so the
+ * proportion it encodes has to be spoken. One decimal keeps a 0.1% sliver
+ * distinct from a 0% one; the trailing `.0` is dropped so the leader does not
+ * announce "100.0 percent".
+ */
+const ratioLabel = (percent: number): string => {
+  const text = percent.toFixed(1).replace(/\.0$/, "");
+  return `${text}% of the best model in this comparison`;
+};
+
+/** CSS custom property carrying the fill width, so the bar has no inline style of its own. */
+type RatioVars = CSSProperties & { "--coverage-ratio": string };
+
 type ModelSlotProps = {
   /** Zero-based grid position, used only for the caption and the empty label. */
   slot: number;
@@ -26,6 +42,12 @@ type ModelSlotProps = {
   /** Active currency + catalog FX rate. */
   fx: Fx;
   usageMix: UsageMix;
+  /**
+   * Coverage of the best comparable slot, from `coverageBaselineTokens` in the
+   * parent (which sees all slots). `null` hides this slot's meter — with one or
+   * zero comparable models there is nothing for the line to be relative to.
+   */
+  baselineTokens: number | null;
   onAdd: () => void;
   onClear: (id: string) => void;
 };
@@ -43,6 +65,7 @@ export function ModelSlot({
   balance,
   fx,
   usageMix,
+  baselineTokens,
   onAdd,
   onClear,
 }: ModelSlotProps) {
@@ -77,9 +100,63 @@ export function ModelSlot({
   const blend = blendedPricePerMillionUSD(model, usageMix);
   const priceUnknown = Number.isNaN(blend);
   const unlimited = isUnlimitedCoverage(model, usageMix);
+  // Read once: the displayed count and the meter width must be the same figure,
+  // or a re-render could move one without the other.
+  const tokens = coverageTokens(balance, model, fx, usageMix);
   const coverage = priceUnknown
     ? { value: '', unit: '' }
-    : formatTokenCount(coverageTokens(balance, model, fx, usageMix), fx);
+    : formatTokenCount(tokens, fx);
+
+  /*
+   * Meter state, line only (no percentage on screen):
+   * - no baseline from the parent (fewer than two comparable slots) hides the
+   *   meter in *every* state, so a row never shows one stray line — including
+   *   for a free model, whose full bar would compare against nothing.
+   * - unlimited buys unbounded tokens, so it sits at the top of the scale and
+   *   draws a full line whatever the baseline says.
+   * - an unknown price is not "0 tokens", so it draws no fill: the dashed rule
+   *   reads as "nothing measured" rather than "measured at zero".
+   * - otherwise the line is the slot's share of the leader.
+   */
+  const renderCoverageRatio = () => {
+    if (baselineTokens === null) return null
+    if (priceUnknown) {
+      return (
+        <Box
+          className="coverage-ratio is-unknown"
+          role="img"
+          aria-label="No comparison — pricing unavailable"
+        />
+      )
+    }
+    if (unlimited) {
+      return (
+        <Box
+          className="coverage-ratio"
+          role="img"
+          aria-label="Unlimited tokens — the most this balance can buy"
+          style={{ "--coverage-ratio": "100%" } as RatioVars}
+        >
+          <Box className="coverage-ratio-fill" />
+        </Box>
+      )
+    }
+    const percent = coverageRatioPercent(tokens, baselineTokens)
+    return (
+      <Box
+        className="coverage-ratio"
+        role="img"
+        aria-label={ratioLabel(percent)}
+        /* toFixed(2): `coverageTokens` floors to whole tokens, so a true half is
+           49.99999985% here — two decimals says the same thing to the pixel and
+           keeps the inline style a stable width. The spoken label below keeps the
+           extra precision so a sliver never announces "0%". */
+        style={{ "--coverage-ratio": `${percent.toFixed(2)}%` } as RatioVars}
+      >
+        <Box className="coverage-ratio-fill" />
+      </Box>
+    )
+  }
 
   const renderCoverageValue = () => {
     if (priceUnknown) {
@@ -133,6 +210,7 @@ export function ModelSlot({
             nothing. See isUnlimitedCoverage. */}
         {renderCoverageValue()}
         <Text className="coverage-note">{renderCoverageNote()}</Text>
+        {renderCoverageRatio()}
       </Box>
       {/* Both rates come straight from the catalog (`input`/`output`, US cents
           per 1M) and render in the active currency at the active FX rate: 200 →

@@ -8,6 +8,7 @@ import {
   VisuallyHidden,
 } from "@chakra-ui/react";
 import {
+  coverageBaselineTokens,
   currencyConfig,
   DEFAULT_USAGE_MIX,
   formatBalanceForDisplay,
@@ -68,6 +69,16 @@ export function ModelBalanceSection({
   const calculationBalance = balanceOutOfRange
     ? maxSafeBalance(fx.currency)
     : balanceNumber;
+
+  // The meter's full width is the best coverage in the row, so it is derived
+  // from every slot at once — a slot cannot see its neighbours. Not state: it
+  // re-derives with the balance, the mix, the FX rate, and each pick or clear.
+  const baselineTokens = coverageBaselineTokens(
+    calculationBalance,
+    selectedModels,
+    fx,
+    usageMix,
+  );
 
   return (
     <Box
@@ -222,6 +233,7 @@ export function ModelBalanceSection({
                 balance={calculationBalance}
                 fx={fx}
                 usageMix={usageMix}
+                baselineTokens={baselineTokens}
                 onAdd={addFirstAvailable}
                 onClear={removeModel}
               />
