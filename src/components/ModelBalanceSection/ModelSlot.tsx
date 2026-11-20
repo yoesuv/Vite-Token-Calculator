@@ -44,8 +44,9 @@ type ModelSlotProps = {
   usageMix: UsageMix;
   /**
    * Coverage of the best comparable slot, from `coverageBaselineTokens` in the
-   * parent (which sees all slots). `null` hides this slot's meter — with one or
-   * zero comparable models there is nothing for the line to be relative to.
+   * parent (which sees all slots). `null` only when *no* slot in the row has a
+   * measurable price, so a priced slot always gets a baseline — a lone model is
+   * its own leader and therefore renders a full 100% bar rather than nothing.
    */
   baselineTokens: number | null;
   onAdd: () => void;
@@ -108,18 +109,20 @@ export function ModelSlot({
     : formatTokenCount(tokens, fx);
 
   /*
-   * Meter state, line only (no percentage on screen):
-   * - no baseline from the parent (fewer than two comparable slots) hides the
-   *   meter in *every* state, so a row never shows one stray line — including
-   *   for a free model, whose full bar would compare against nothing.
+   * Meter state, line only (no percentage on screen). It renders in *every*
+   * state, including a row with a single model:
+   * - a lone priced slot is its own leader (`coverageBaselineTokens` returns its
+   *   own coverage), so the line is full. 100% then means "nothing in this
+   *   comparison buys more" — true, and more useful than an absent rule.
    * - unlimited buys unbounded tokens, so it sits at the top of the scale and
    *   draws a full line whatever the baseline says.
    * - an unknown price is not "0 tokens", so it draws no fill: the dashed rule
    *   reads as "nothing measured" rather than "measured at zero".
    * - otherwise the line is the slot's share of the leader.
+   * `baselineTokens === null` (no slot in the row has a measurable price) is
+   * unreachable for a priced slot, so it only guards the measured branch.
    */
   const renderCoverageRatio = () => {
-    if (baselineTokens === null) return null
     if (priceUnknown) {
       return (
         <Box
@@ -141,6 +144,7 @@ export function ModelSlot({
         </Box>
       )
     }
+    if (baselineTokens === null) return null
     const percent = coverageRatioPercent(tokens, baselineTokens)
     return (
       <Box
