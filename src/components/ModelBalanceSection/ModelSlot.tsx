@@ -29,6 +29,30 @@ const ratioLabel = (percent: number): string => {
   return `${text}% of the best model in this comparison`;
 };
 
+/**
+ * `role="meter"` is the correct ARIA role for a quantitative gauge, so assistive
+ * tech can convey it as a measurement (value out of a range) rather than as an
+ * image. Every meter renders the same min/max scale — 0–100 of the leader — and
+ * only the value and spoken text vary: an unknown price is *not measured*, so it
+ * reports nothing rather than implying a measured zero.
+ */
+const meterProps = (percent: number | null) =>
+  percent === null
+    ? {
+        role: "meter" as const,
+        "aria-label": "Not measured — pricing unavailable",
+        "aria-valuemin": 0,
+        "aria-valuemax": 100,
+      }
+    : {
+        role: "meter" as const,
+        "aria-label": ratioLabel(percent),
+        "aria-valuemin": 0,
+        "aria-valuemax": 100,
+        "aria-valuenow": percent,
+        "aria-valuetext": ratioLabel(percent),
+      }
+
 /** CSS custom property carrying the fill width, so the bar has no inline style of its own. */
 type RatioVars = CSSProperties & { "--coverage-ratio": string };
 
@@ -120,42 +144,45 @@ export function ModelSlot({
    *   reads as "nothing measured" rather than "measured at zero".
    * - otherwise the line is the slot's share of the leader.
    * `baselineTokens === null` (no slot in the row has a measurable price) is
-   * unreachable for a priced slot, so it only guards the measured branch.
+   * unreachable for a priced slot, so it only degrades the measured branch to
+   * the not-measured style instead of removing the meter.
    */
   const renderCoverageRatio = () => {
     if (priceUnknown) {
-      return (
-        <Box
-          className="coverage-ratio is-unknown"
-          role="img"
-          aria-label="No comparison — pricing unavailable"
-        />
-      )
+      return <Box className="coverage-ratio is-unknown" {...meterProps(null)} />
     }
     if (unlimited) {
       return (
         <Box
           className="coverage-ratio"
-          role="img"
+          {...meterProps(100)}
           aria-label="Unlimited tokens — the most this balance can buy"
+          aria-valuetext="Unlimited tokens — the most this balance can buy"
           style={{ "--coverage-ratio": "100%" } as RatioVars}
         >
           <Box className="coverage-ratio-fill" />
         </Box>
       )
     }
-    if (baselineTokens === null) return null
-    const percent = coverageRatioPercent(tokens, baselineTokens)
+    // Unreachable for a priced slot (see the prop docs), but a fail-safe rather
+    // than `null`: dropping the element would strip this card's 13px meter block
+    // and shift it against its siblings. An empty meter keeps the row stable and
+    // reads as "nothing to compare against", which is what a null baseline means.
+    const percent =
+      baselineTokens === null ? null : coverageRatioPercent(tokens, baselineTokens)
     return (
       <Box
-        className="coverage-ratio"
-        role="img"
-        aria-label={ratioLabel(percent)}
+        className={`coverage-ratio${percent === null ? " is-unknown" : ""}`}
+        {...meterProps(percent)}
         /* toFixed(2): `coverageTokens` floors to whole tokens, so a true half is
            49.99999985% here — two decimals says the same thing to the pixel and
            keeps the inline style a stable width. The spoken label below keeps the
-           extra precision so a sliver never announces "0%". */
-        style={{ "--coverage-ratio": `${percent.toFixed(2)}%` } as RatioVars}
+           extra precision so a sliver never announces "0%". `coverageRatioPercent`
+           clamps to [0,100] and returns 0 for non-finite input, so this is always
+           a valid percentage. */
+        style={
+          { "--coverage-ratio": `${(percent ?? 0).toFixed(2)}%` } as RatioVars
+        }
       >
         <Box className="coverage-ratio-fill" />
       </Box>
