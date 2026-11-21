@@ -1,4 +1,9 @@
 .balance-section {
+  /* Height of the meter block under the coverage figure: the 2px rule plus its
+     11px top gap. The skeleton panel reserves the same space (see
+     .slot-skeleton-panel), so the two stay in sync instead of drifting apart
+     whenever the meter is resized. */
+  --coverage-meter-block: 13px;
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -193,14 +198,22 @@
 .coverage-ratio {
   position: relative;
   height: 2px;
-  margin-top: 11px;
+  margin-top: calc(var(--coverage-meter-block) - 2px);
+  /* Fallback first: engines without `color-mix()` drop the declaration below
+     entirely, which would leave the track transparent and the fill floating on
+     the panel with no wash to read against. A solid border token still draws a
+     visible track there. */
+  background: var(--chakra-colors-border-subtle);
   /* A 20% accent wash (not the flat `border` token), so an almost-empty meter
      still reads as the same brand measurement as its fill — and never as a
      plain rule — in either theme. */
   background: color-mix(in srgb, var(--chakra-colors-accent) 20%, transparent);
 }
 .coverage-ratio-fill {
-  width: var(--coverage-ratio);
+  /* `0%` fails closed: an unset or invalid custom property is invalid at
+     computed-value time, and `width` would then fall back to its initial
+     `auto` — a full bar claiming the leader's coverage. */
+  width: var(--coverage-ratio, 0%);
   height: 100%;
   background: var(--chakra-colors-accent);
   transition: width 160ms ease;
@@ -209,7 +222,10 @@
    "not measured" never looks like "measured at zero" (the case coverageTokens'
    0 guard is documented against). */
 .coverage-ratio.is-unknown {
-  height: 0;
+  /* Keep the measured meter's 2px box (border-box: the dashed rule sits inside
+     it) so a slot flipping between measured and unknown never shifts the card
+     height against its siblings. */
+  height: 2px;
   border-top: 1px dashed var(--chakra-colors-border);
   background: transparent;
 }
@@ -247,7 +263,12 @@
 /* Catalog still loading: skeleton cards mirror the filled slot's blocks so the
    row height does not jump when the API responds. */
 .slot-skeleton-name { margin-top: 16px; }
-.slot-skeleton-panel { margin-top: 16px; min-height: 95px; }
+.slot-skeleton-panel {
+  margin-top: 16px;
+  /* The 82px panel the filled slot draws plus the meter block below it, so the
+     loading card and the real card keep one height. */
+  min-height: calc(82px + var(--coverage-meter-block));
+}
 
 /* Catalog failed: one full-width panel instead of empty slots. */
 .slot-state { display: flex; grid-column: 1 / -1; min-height: 170px; align-items: center; justify-content: center; flex-direction: column; gap: 10px; color: var(--chakra-colors-fg-muted); font-size: 13px; text-align: center; }
